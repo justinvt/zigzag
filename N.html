@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+	<head>
+<link rel="shortcut icon" href="images/download.jpeg">
+		<style>
+		.loader{
+		position: absolute;
+		top: 0px;
+		left: 0px;
+		background: none;
+		border: solid 10px red;
+		margin: 20px;
+		padding: 20px;
+		z-index: 100;
+		color: red;
+		font-weight: bold;
+		text-transform: uppercase;
+		font-family: Helvetica;
+		}
+		.loader::before{
+		content: "Redrawing";
+		}
+
+		svg{
+		width: 100%;
+		margin: 0;
+		display: block;
+		z-index: -1;
+
+		}
+		path {
+		opacity:1;
+		stroke-linejoin: round;
+		}
+
+		.image_upload{		
+		position: absolute;
+		bottom: 0px;
+		left: 0px;
+		background:#fff;
+		opacity:0.7;
+		}
+
+		canvas {
+		position: absolute;
+		top: 0px;
+		right: 0px;
+		}
+
+		</style>
+		<script>
+		var starting_point=[0,0]
+		var minimum_stroke = min_stroke = 0.9;
+		var max_stroke = 5.0;
+		var sub_length = 5;
+		var diff = max_stroke - min_stroke
+		var row_x=0;
+		var num_len;
+		var num_rows;
+		var cur = starting_point
+		var buff=""
+		var URL;
+		var cvs;
+		var ctx;
+		var res; 
+		var rect;
+		var stroke_der = 0.2;
+		//var rect;
+
+
+
+		var defaults = {
+		offset: 30,
+		lengths: 25,
+		d_height: 75,
+		rows: 40,
+		randomness: 0,
+		sub_length: sub_length,
+		max_stroke: max_stroke,
+		min_stroke: min_stroke,
+			stroke_color:"#000",
+			fill_color:"#fff"
+		}
+
+		function getRandomArbitrary(min, max) {
+		return Math.random() * (max - min) + min;
+		}
+		function showLoader() {
+		var loader = document.createElement("div")
+		loader.className = "loader"
+		loader.innerHTML = "REDRAWING"
+		document.body.prepend(loader)//.append(document.body.innerHTML)
+		}
+
+		function removeLoader() {
+		var loader =  document.getElementsByClassName("loader")
+		Array.from(loader).map(a => a.parentNode.remove(a));
+		}
+		function drawDiag(lengths=defaults.lengths, d_height=defaults.d_height, offset=defaults.offset){
+
+
+		rect = cvs.getBoundingClientRect();
+		//console.log("args were", arguments)
+		//var svg_img = document.querySelector("svg")
+
+		Array(lengths).fill().map((i,item) =>  { 
+
+
+
+		Array(defaults.sub_length).fill().map((j,item2) =>  {
+
+		var p = `M${cur[0]} ${cur[1]}`;
+		var x_d = defaults.d_height/defaults.sub_length; 
+		// Does a honeycomb pattern
+		//var y_d = ( [0,1,4,5,8,9,12,13].includes(row_x) )  ? Number(`${(item % 2 == 0 ) ? "" : "-"}${defaults.d_height/defaults.sub_legth}`) :    Number(`${ ( item & 1 )  ? "" : "-"}${defaults.d_height/defaults.sub_legth}`);
+		//var every_4 = Array(1000).fill().map( (e,i) => i).map( i => (i/2 % 4 < 2? null : i)).filter(a => {return a != null})
+		//var y_d =  ( every_4.includes(row_x) ? -2 : 1)  * Number(`${(item % 2 == 0 ) ? "" : "-"}${defaults.d_height/defaults.sub_length}`)
+		
+		//alternating with variable amplitude
+		//var y_d =  ( every_4.includes(row_x) ? -0.7  : 1)  * Number(`${(item % 2 == 0 ) ? "" : "-"}${defaults.d_height/defaults.sub_length}`)
+
+		// Normal zigzags
+		var y_d = Number(`${(item % 2 == 0 ) ? "" : "-"}${defaults.d_height/defaults.sub_length}`)
+
+		var class_name = [
+		["item", item, row_x].join("_"),
+		["xpercent",parseInt((item/num_len) * 100)].join("_"),
+		["ypercent",parseInt((row_x/num_rows) * 100)].join("_"),
+		["cursor", cur.join("_")].join("_"),
+			["row", row_x].join("_")
+		].join(" ")
+		cur[0] += x_d;
+		cur[1] += y_d;
+		p +=  `l${x_d} ${y_d } ` 
+
+		if(ctx && ctx.getImageData(0,0, 1, 1)){
+		//var rect = cvs.getBoundingClientRect();
+
+		var x_i = cur[0]
+		var y_i = cur[1]
+		var x =  cur[0];//parseInt(x_i - rect.left);
+		var y =  cur[1];//parseInt(y_i - rect.top);
+		var pix = ctx.getImageData(x, y, 1, 1).data
+		var white = 1 - (pix[0]/255 * pix[1]/255 * pix[2]/255)
+		var pix_str = (defaults.max_stroke  * white ) + defaults.min_stroke + getRandomArbitrary(-1*defaults.randomness,defaults.randomness) 
+		//var pix_str = max_stroke * white
+		//console.log("found xi yi pix white pix", pix, white, pix_str)
+		var str = `stroke-linejoin="round" stroke-width="${ pix_str.toFixed(2) }px" style="stroke: ${defaults.stroke_color}; fill: ${defaults.fill_color};"`
+		//var str = `stroke-width="${ getRandomArbitrary( 0, max_stroke).toFixed(2) }px"`u=
+		}
+		else{
+		var str = `stroke-width="2px"`	
+		}
+		var p = `<path class="${class_name}" ${str} d=\"${p}\" />`
+		buff += p
+		})
+
+		})
+		//console.log("buff", buff)
+		//svg_img.innerHTML += buff
+		cur[0] = 0
+		cur[1] += offset
+		row_x+=1
+		}
+
+		function redraw(){
+
+		var svgc = document.querySelector("svg")
+		Object.entries(defaults).map( (k) => {
+		console.log("Found #", k[0], document.querySelectorAll("#"+k[0])[0].value)
+			if( !document.querySelectorAll("#"+k[0])[0].value.match(/^#/gi))
+				defaults[k[0]] = parseFloat(document.querySelectorAll("#"+k[0])[0].value)
+			else
+				defaults[k[0]] = document.querySelectorAll("#"+k[0])[0].value
+					
+
+		})
+		console.log("defaults", defaults)
+		svgc.innerHTML = buff = ""
+
+		starting_point= cur = [0,0]
+		row_x=0;
+
+		num_rows = defaults.rows;//parseInt(  svgc.height.baseVal.value/defaults.offset)
+		num_len = parseInt( svgc.width.baseVal.value / defaults.d_height )
+		//console.log("dimeniosn", num_rows, num_len)
+		Array(num_rows).fill().map( (el,i) => {
+		console.log("iter" , i)
+		if(i == 0){
+		//showLoader()
+		}
+		drawDiag(num_len, defaults.d_height, defaults.offset) 
+		if(i == num_rows-1){
+		//removeLoader()
+		}
+		})
+		document.querySelector("svg").innerHTML = buff
+
+		}
+
+
+
+
+
+
+		function handleImageFiles(e) {	
+		//var url = URL.createObjectURL("samples/face_big.png");
+		var img = new Image();
+		img.crossOrigin = "Anonymous";
+		img.src = "samples/face2.png"
+		img.onload = function() {
+			cvs.width = img.width;
+			cvs.height = img.height;
+			ctx.drawImage(img, 0, 0);
+			redraw();
+			}
+
+
+
+		}
+
+
+		function setupImg() {
+		Object.entries(defaults).map( (k,v) => {
+			var i = document.createElement("input")
+			var l = document.createElement("label")
+			var f = document.createElement("div")
+			i.type = "text"
+			i.value = k[1]
+			i.id = i.name = k[0]
+			i.onblur = function() { 
+				console.log("lost focus");
+				redraw() 
+			}
+			l.textContent = k[0]
+			f.appendChild(l)
+			f.appendChild(i)
+			document.querySelectorAll("div")[0].appendChild(f)
+		})
+		URL = window.URL;
+		cvs = document.getElementById('canvas');
+		ctx = cvs.getContext('2d');
+		res = document.getElementById('results');
+		inputImage = document.getElementById('inputImage');
+		handleImageFiles()
+		//inputImage.addEventListener('change', handleImageFiles, false);
+		//cvs.addEventListener('mousemove', mousePos, false);
+		}
+
+
+		//document.addEventListener('DOMContentLoaded', redraw, false);
+		document.addEventListener('DOMContentLoaded', setupImg, false);
+
+		</script>
+		<title>eeee</title>
+	</head>
+	<body>
+		<div class='image_upload'>
+			<p>
+				Open image: <input type="file" id="inputImage">
+			</p>
+		</div>
+		<canvas id="canvas" style="margin:12px;"></canvas><svg xmlns="http://www.w3.org/2000/svg" width="800" height="800"  stroke-linecap="square" stroke-linejoin="miter"> </svg>
+	</body>
+</html>

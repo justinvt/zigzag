@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<title></title>
+	</head>
+	<body>
+		<div id="output"></div>
+		<script type="text/javascript">
+			
+			function postData(data){
+				const url = '/pul';
+
+
+				let fetchData = {
+				  method: 'POST',
+				  body: JSON.stringify(data),
+				  headers: new Headers({
+				    'Content-Type': 'application/json; charset=UTF-8'
+				  })
+				}
+
+				fetch(url, fetchData)
+				  .then(function() {
+				   
+				  });
+			}
+			
+
+		 var eventMethod = window.addEventListener
+		 ? "addEventListener"
+		 : "attachEvent";
+		 var eventer = window[eventMethod];
+		 var messageEvent = eventMethod === "attachEvent"
+		 ? "onmessage"
+		 : "message";
+		 eventer(messageEvent, function (e) {
+		 //data you receive from parent is stored inside e.data
+		 $('#output').text(e.data);
+ 			postData(e.data)
+		 });
+
+		</script>
+	</body>
+</html>
