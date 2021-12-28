@@ -23,10 +23,8 @@
 		}
 
 		svg{
-			width: 100%;
-			margin: 0;
-			display: block;
-			z-index: -1;
+			width:800px;
+			height: 800px;
 		}
 		
 		path {
@@ -101,50 +99,38 @@
 			Array.from(loader).map(a => a.parentNode.remove(a));
 		}
 		
-		function drawDiag(position,lengths=defaults.lengths, d_height=defaults.d_height, offset=defaults.offset, orientation=defaults.orientation){
+		function drawDiag(par, position,lengths=defaults.lengths, d_height=defaults.d_height, offset=defaults.offset, orientation=defaults.orientation){
 			rect = cvs.getBoundingClientRect();
 			//console.log("args were", arguments)
 			//var svg_img = document.querySelector("svg")
+			var buffer = "";
 			cur = position
-
+			var x_d = defaults.d_height/defaults.sub_length; 
+			var y_d = (defaults.d_height/defaults.sub_length) * orientation
+			
 			Array(lengths).fill().map((i,item) =>  { 
 
-				console.log("column ", item)
+				//console.log("column ", item)
 				
 				Array(defaults.sub_length).fill().map((j,item2) =>  {
 
-					console.log("sub leength ", item2)
+					//console.log("sub leength ", item2)
 					var p = `M${cur[0]} ${cur[1]}`;
-					var x_d = defaults.d_height/defaults.sub_length; 
-					
-					//var every_4 = Array(100).fill().map( (e,i) => i).map( i => (i/2 % 7 < 2 ? null : i)).filter(a => {return a != null})
-					//var y_d =  ( every_4.includes(row_x) ? -1 : 1)  * Number(`${(item % 2 == 0 ) ? "" : "-"}${defaults.d_height/defaults.sub_length}`)
-		
-					//alternating with variable amplitude
-					//var y_d =  ( every_4.includes(row_x) ? -0.7  : 1)  * Number(`${(item % 2 == 0 ) ? "" : "-"}${defaults.d_height/defaults.sub_length}`)
 
-					//rmal zigzags
-					//var y_d = Number(`${(item % 2 == 0 ) ? "" : "-"}${defaults.d_height/defaults.sub_length}` * orientation)
-					var y_d = (defaults.d_height/defaults.sub_length) * orientation
+
 					
 
 					var class_name = [
-						["item", item, row_x].join("_"),
-						["xpercent",parseInt((item/num_len) * 100)].join("_"),
-						["ypercent",parseInt((row_x/num_rows) * 100)].join("_"),
-						["cursor", cur.join("_")].join("_"),
-						["row", row_x].join("_")
+
 					].join(" ")
 					
 					cur[0] += x_d;
 					cur[1] += y_d;
-					p +=  `l${x_d} ${y_d } ` 
-
-					if(ctx){
+					p +=  ` l${x_d} ${y_d }` 
+					console.log("cursor", cur)
+					if(ctx && ctx.getImageData(cur[0], cur[1], 1, 1)){
 		//var rect = cvs.getBoundingClientRect();
 
-						var x_i = cur[0]
-						var y_i = cur[1]
 						var x =  cur[0];//parseInt(x_i - rect.left);
 						var y =  cur[1];//parseInt(y_i - rect.top);
 						var pix = ctx.getImageData(x, y, 1, 1).data
@@ -166,11 +152,17 @@
 
 					}
 					
-					var paths = `<path class="${[ class_name, "black" ].join(" ")}" ${str[0]} d=\"${p}\" />`
+					//var paths = `<path class="${[ class_name, "black" ].join(" ")}" ${str[0]} d="${p}".>`
+					var path1 = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+					path1.setAttribute('d', p);
+					path1.setAttribute('fill', 'none');
+					path1.setAttribute('stroke', '#000');
+					path1.setAttribute('stroke-width', `${pix_str.toFixed(2)}px`);
 				//	paths = `${paths}<path class="${[ class_name, "red" ].join(" ")}" ${str[1]} d=\"${p}\" />`
 				//	paths = `${paths}<path class="${[ class_name, "green" ].join(" ")}" ${str[2]} d=\"${p}\" />`
 					//paths = `${paths}<path class="${[ class_name, "blue" ].join(" ")}" ${str[3]} d=\"${p}\" />`
-					buff += paths
+					///buffer += paths
+					par.appendChild(path1)
 				})
 
 			})
@@ -179,11 +171,10 @@
 		//svg_img.innerHTML += buff
 			cur[0] = 0
 			row_x+=1
+			return buffer 
 		}
-
-		function redraw(){
-
-			var svgc = document.querySelector("svg")
+		
+		function gatherFormVaues(){
 			Object.entries(defaults).map( (k) => {
 				console.log("Found #", k[0], document.querySelectorAll("#"+k[0])[0].value)
 				if( !document.querySelectorAll("#"+k[0])[0].value.match(/^#/gi))
@@ -192,23 +183,61 @@
 					defaults[k[0]] = document.querySelectorAll("#"+k[0])[0].value
 			})
 		
-
-		svgc.innerHTML = buff = ""
-
-		starting_point= cur = [0,0]
-		row_x=0;
-
-		num_rows = defaults.rows;//parseInt(  svgc.height.baseVal.value/defaults.offset)
-		num_len = parseInt( svgc.width.baseVal.value / defaults.d_height )
+		}
 		
-		//console.log("dimeniosn", num_rows, num_len)
-		Array(num_rows).fill().map( (el,i) => {
-			console.log("row" , i)
-			var pos = [0, i * defaults.offset]
-			drawDiag(pos,num_len, defaults.d_height,defaults.offset, 1) 
-		})
+		function drawPart(par, position, orientation){
+			
+			return Array(10).fill().map( (el,i) => {
+
+				var pos = [position[0], position[1]+ (i * defaults.offset)]
+				 
+				return drawDiag(par, pos,1, defaults.d_height, defaults.offset, orientation)
+			
+			}).join("")
+		}
+
 		
-		document.querySelector("svg").innerHTML = buff
+		function createSVG(width=800,height=800){
+			
+			
+			document.querySelectorAll("svg").forEach(a => a.remove())
+			var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			//s.id = "svgd"
+			//s.setAttribute("xmlns","http://www.w3.org/2000/svg")
+			s.setAttribute("width", width.toString());
+			s.setAttribute("height", height.toString());
+			s.setAttribute("stroke-linecap","round");
+			s.setAttribute("stroke-linejoin","miter");
+		    s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			var pos = [0,0]
+			//drawDiag(s, pos,1, defaults.d_height, defaults.offset, defaults.orientation)
+			drawPart(s, pos, 1)
+			//s =  document.querySelector("#svgd")
+			/*
+			var p = [0,0]
+			all_paths += drawPart(p, -1)
+			var p = [75,0]
+			all_paths += drawPart(p, 1)
+			var p = [150,0]
+			all_paths += drawPart(p, -1)
+			var p = [225, 0]
+			all_paths += drawPart(p, 1)
+*/
+			//s.innerHTML = all_paths
+			//document.querySelector("#oro").innerHTML = all_paths
+			document.body.appendChild(s)
+
+		}
+
+		function redraw(){
+
+
+			gatherFormVaues()
+	
+			starting_point= cur = [0,0]
+
+			createSVG()
+			
 
 		}
 
@@ -288,7 +317,8 @@
 				Open image: <input type="file" id="inputImage">
 			</p>
 		</div>
-		<canvas id="canvas" style="margin:12px;"></canvas>
-		<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800"  stroke-linecap="round" stroke-linejoin="miter"></svg>
+		<canvas id="canvas"></canvas>
+
+		
 	</body>
 </html>
