@@ -23,8 +23,7 @@
 		}
 
 		svg{
-			width:800px;
-			height: 800px;
+
 		}
 		
 		path {
@@ -73,10 +72,10 @@
 			orientation: 1,
 			offset: 20,
 			lengths: 25,
-			d_height: 75,
+			d_height: 255,
 			rows: 40,
 			randomness: 0,
-			sub_length: 24,
+			sub_length: 80,
 			max_stroke: 7.0,
 			min_stroke: 1.0,
 			stroke_color:"#000",
@@ -99,69 +98,50 @@
 			Array.from(loader).map(a => a.parentNode.remove(a));
 		}
 		
-		function drawDiag(par, position,lengths=defaults.lengths, d_height=defaults.d_height, offset=defaults.offset, orientation=defaults.orientation){
+		function drawDiag(par, position,lengths=defaults.lengths, svg_props, d_height=defaults.d_height, offset=defaults.offset, orientation=defaults.orientation){
 			rect = cvs.getBoundingClientRect();
 			//console.log("args were", arguments)
 			//var svg_img = document.querySelector("svg")
 			var buffer = "";
 			cur = position
 			var x_d = defaults.d_height/defaults.sub_length; 
-			var y_d = (defaults.d_height/defaults.sub_length) * orientation
 			
+				var difff= defaults.max_stroke - defaults.min_stroke
 			Array(lengths).fill().map((i,item) =>  { 
 
-				//console.log("column ", item)
-				
 				Array(defaults.sub_length).fill().map((j,item2) =>  {
-
-					//console.log("sub leength ", item2)
+					if(cur[0] > svg_props.max_x){
+						return
+					}
+					
+					var y_d = ((1 + (item2*0.009)) * x_d * orientation )
 					var p = `M${cur[0]} ${cur[1]}`;
-
-
-					
-
-					var class_name = [
-
-					].join(" ")
-					
 					cur[0] += x_d;
 					cur[1] += y_d;
 					p +=  ` l${x_d} ${y_d }` 
-					console.log("cursor", cur)
+					//console.log("cursor", cur)
 					if(ctx && ctx.getImageData(cur[0], cur[1], 1, 1)){
 		//var rect = cvs.getBoundingClientRect();
 
 						var x =  cur[0];//parseInt(x_i - rect.left);
 						var y =  cur[1];//parseInt(y_i - rect.top);
 						var pix = ctx.getImageData(x, y, 1, 1).data
-						var red =  (pix[0]/255)
-						var green = (pix[1]/255)
-						var blue =  (pix[2]/255)
+						var red =  (pix[0]/255.0)
+						var green = (pix[1]/255.0)
+						var blue =  (pix[2]/255.0)
 						var white = 1 - (red * green * blue)
-						var pix_str = (defaults.max_stroke  * white ) + defaults.min_stroke + getRandomArbitrary(-1*defaults.randomness,defaults.randomness) 
-		//var pix_str = max_stroke * white
-		//console.log("found xi yi pix white pix", pix, white, pix_str)
-						var str = [
-							`stroke-linejoin="round" stroke-width="${ pix_str.toFixed(4) }px" style="stroke: ${defaults.stroke_color}; fill: ${defaults.fill_color};"`,
-						//	`stroke-linejoin="round" stroke-width="${ red.toFixed(2) }px" style="stroke: red; fill: ${defaults.fill_color};"`,
-							//`stroke-linejoin="round" stroke-width="${ green.toFixed(2) }px" style="stroke:green; fill: ${defaults.fill_color};"`,
-						//	`stroke-linejoin="round" stroke-width="${ blue.toFixed(2) }px" style="stroke: blue; fill: ${defaults.fill_color};"`
-							''
-						]
-		//var str = `stroke-width="${ getRandomArbitrary( 0, max_stroke).toFixed(2) }px"`u=
+					
+						var pix_str = defaults.min_stroke + ( difff * white )   + getRandomArbitrary(-1*defaults.randomness,defaults.randomness) 
+
 
 					}
 					
-					//var paths = `<path class="${[ class_name, "black" ].join(" ")}" ${str[0]} d="${p}".>`
 					var path1 = document.createElementNS("http://www.w3.org/2000/svg", 'path');
 					path1.setAttribute('d', p);
 					path1.setAttribute('fill', 'none');
-					path1.setAttribute('stroke', '#000');
-					path1.setAttribute('stroke-width', `${pix_str.toFixed(2)}px`);
-				//	paths = `${paths}<path class="${[ class_name, "red" ].join(" ")}" ${str[1]} d=\"${p}\" />`
-				//	paths = `${paths}<path class="${[ class_name, "green" ].join(" ")}" ${str[2]} d=\"${p}\" />`
-					//paths = `${paths}<path class="${[ class_name, "blue" ].join(" ")}" ${str[3]} d=\"${p}\" />`
-					///buffer += paths
+					path1.setAttribute('stroke', svg_props.color);
+					path1.setAttribute('stroke-width', pix_str.toFixed(4) + "px");
+
 					par.appendChild(path1)
 				})
 
@@ -169,7 +149,7 @@
 			
 		//console.log("buff", buff)
 		//svg_img.innerHTML += buff
-			cur[0] = 0
+			cur[0] = position[0]
 			row_x+=1
 			return buffer 
 		}
@@ -185,58 +165,53 @@
 		
 		}
 		
-		function drawPart(par, position, orientation){
+		function drawPart(par, position, orientation, others){
 			
-			return Array(10).fill().map( (el,i) => {
+			Array(defaults.rows*6).fill().map( (el,i) => {
 
 				var pos = [position[0], position[1]+ (i * defaults.offset)]
 				 
-				return drawDiag(par, pos,1, defaults.d_height, defaults.offset, orientation)
+				return drawDiag(par, pos,defaults.sub_length,{color:others.color, max_x: others.max_x}, defaults.d_height, defaults.offset, orientation)
+			
 			
 			}).join("")
+			return par
 		}
+		function newSVG(props={}){
 
-		
-		function createSVG(width=800,height=800){
-			
-			
-			document.querySelectorAll("svg").forEach(a => a.remove())
 			var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-			//s.id = "svgd"
-			//s.setAttribute("xmlns","http://www.w3.org/2000/svg")
-			s.setAttribute("width", width.toString());
-			s.setAttribute("height", height.toString());
-			s.setAttribute("stroke-linecap","round");
-			s.setAttribute("stroke-linejoin","miter");
-		    s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
-			var pos = [0,0]
-			//drawDiag(s, pos,1, defaults.d_height, defaults.offset, defaults.orientation)
-			drawPart(s, pos, 1)
-			//s =  document.querySelector("#svgd")
-			/*
-			var p = [0,0]
-			all_paths += drawPart(p, -1)
-			var p = [75,0]
-			all_paths += drawPart(p, 1)
-			var p = [150,0]
-			all_paths += drawPart(p, -1)
-			var p = [225, 0]
-			all_paths += drawPart(p, 1)
-*/
-			//s.innerHTML = all_paths
-			//document.querySelector("#oro").innerHTML = all_paths
-			document.body.appendChild(s)
-
+				s.setAttribute("width", props.width.toString());
+				s.setAttribute("height", props.height.toString());
+				s.setAttribute("stroke-linecap","round");
+				s.setAttribute("stroke-linejoin","miter");
+				s.style.position = "absolute"
+				//s.style.top = props.top.toString() + "px"
+				//s.style.left = props.left.toString() + "px"
+		   	 	s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			return s
+		}
+		
+		function createSVG(props={}){
+			var line_density = props.height / defaults.rows
+			document.body.appendChild(  
+				drawPart(
+					newSVG(props), 
+					[props.x, -1 * defaults.rows * defaults.offset], 
+					props.orientation,
+					{color:props.color, max_x: props.max_x, max_y: props.max_y}
+				)
+			)
 		}
 
 		function redraw(){
-
+Array.from(document.querySelectorAll("svg")).map(s => s.remove())
 
 			gatherFormVaues()
 	
 			starting_point= cur = [0,0]
 
-			createSVG()
+			createSVG({x:0, width:1600, height: 1600,  max_x: 800, max_y:800,orientation: 1,color:"#000"})
+			createSVG({x:800, width:1600, height: 1600, max_x: 1600, max_y:800,orientation: -1, color:"#000"})
 			
 
 		}
@@ -252,7 +227,7 @@
 			img.crossOrigin = "Anonymous";
 			//img.src = "samples/dude.jpg"
 			//img.src = "samples/face2.png"
-			img.src = "samples/face2.png"
+			img.src = "samples/face2_large.png"
 			
 			img.onload = function() {
 				cvs.width = img.width;
@@ -288,22 +263,9 @@
 			handleImageFiles()
 			//inputImage.addEventListener('change', handleImageFiles, false);
 			//cvs.addEventListener('mousemove', mousePos, false);
-			if(animate)
-				cycleAll()
+	
 		}
-			// The derivatve of position
-			// (not really, but you get the idea)
-		var y = function(t){ return 0.6 * Math.cos(t) }
 
-		//animate full
-		function cycleAll(){
-		   Array.from(document.getElementsByTagName("svg")[0].getElementsByTagName("path")).map(p => {
-		      var y1 = parseFloat(p.attributes['stroke-width'].value) + y(t)
-		      p.attributes['stroke-width'].value = y1 + "px"
-		      t += 0.003;
-		  })
-		   setTimeout(cycleAll,50)
-		}
 
 		//document.addEventListener('DOMContentLoaded', redraw, false);
 		document.addEventListener('DOMContentLoaded', setupImg, false);
