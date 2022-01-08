@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheets/style.css">
+		<script>
+			
+		var t = 0;
+		var starting_point=[0,0]
+		var row_x=0;
+		var num_len;
+		var num_rows;
+		var cur = starting_point
+		var buff=""
+		var URL;
+		var cvs;
+		var ctx;
+		var res; 
+		var rect;
+		var stroke_der = 0.2;
+		var animate = false
+		var size = 800
+		var half_size = parseInt(size * 0.5)
+		//var rect;
+
+
+
+		var defaults = {
+			orientation: 1,
+			offset: 20,
+			lengths: 25,
+			d_height: 255,
+			rows: 40,
+			randomness: 0,
+			sub_length: 14,
+			max_stroke: 7.0,
+			min_stroke: 1.0,
+			stroke_color:"#000",
+			fill_color:"#fff",
+			y_func: "x_d"
+		}
+		
+		const queryString = window.location.search;
+		const urlParams = new URLSearchParams(queryString);
+		[...urlParams.keys()].map(k => {
+			console.log(defaults[k], " changed to ")
+			defaults[k] = typeof defaults[k] === "string" ? urlParams.get(k) :  parseFloat(urlParams.get(k))
+			console.log(defaults[k] , " Now ", defaults)
+		})
+		
+
+		function getRandomArbitrary(min, max) {
+			return Math.random() * (max - min) + min;
+		}
+		
+		function showLoader() {
+			var loader = document.createElement("div")
+			loader.className = "loader"
+			loader.innerHTML = "REDRAWING"
+			document.body.prepend(loader)//.append(document.body.innerHTML)
+		}
+
+		function removeLoader() {
+			var loader =  document.getElementsByClassName("loader")
+			Array.from(loader).map(a => a.parentNode.remove(a));
+		}
+		
+		function drawDiag(par, position,lengths=defaults.lengths, svg_props, d_height=defaults.d_height, offset=defaults.offset, orientation=defaults.orientation){
+			rect = cvs.getBoundingClientRect();
+			//console.log("args were", arguments)
+			//var svg_img = document.querySelector("svg")
+			var buffer = "";
+			cur = position
+			var x_d;
+			var y_d;
+			var itemize=0;
+			x_d = defaults.d_height/defaults.sub_length; 
+			y_d =   x_d * orientation
+			
+			
+			var difff= defaults.max_stroke - defaults.min_stroke
+			Array(lengths).fill().map((i,item) =>  { 
+
+				Array(defaults.sub_length).fill().map((j,item2) =>  {
+					if(cur[0] > svg_props.max_x){
+						return
+					}
+					itemize++;
+					y_d = orientation * eval(defaults.y_func)
+					var p = `m${cur[0]} ${cur[1]}`;
+					cur[0] += x_d;
+					cur[1] += y_d;
+					p +=  ` l${x_d} ${y_d }` 
+					//console.log("cursor", cur)
+					if(ctx && ctx.getImageData(cur[0], cur[1], 1, 1)){
+		//var rect = cvs.getBoundingClientRect();
+
+						var x =  cur[0];//parseInt(x_i - rect.left);
+						var y =  cur[1];//parseInt(y_i - rect.top);
+						var pix = ctx.getImageData(x, y, 1, 1).data
+						var red =  (pix[0]/255.0)
+						var green = (pix[1]/255.0)
+						var blue =  (pix[2]/255.0)
+						var white = 1 - (red * green * blue)
+					
+						var pix_str = defaults.min_stroke + ( difff * white )   + getRandomArbitrary(-1*defaults.randomness,defaults.randomness) 
+
+
+					}
+					
+					var path1 = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+					path1.setAttribute('d', p);
+					path1.setAttribute('fill', 'none');
+					path1.setAttribute('stroke', svg_props.color);
+					path1.setAttribute('stroke-width', pix_str.toFixed(4) + "px");
+
+					par.appendChild(path1)
+				})
+
+			})
+			
+		//console.log("buff", buff)
+		//svg_img.innerHTML += buff
+			cur[0] = position[0]
+			row_x+=1
+			return buffer 
+		}
+		
+		function gatherFormVaues(){
+			Object.entries(defaults).map( (k) => {
+				console.log("Found #", k[0], document.querySelectorAll("#"+k[0])[0].value)
+				if( !document.querySelectorAll("#"+k[0])[0].value.match(/^#|[^\d\.\-]/gi))
+					defaults[k[0]] = parseFloat(document.querySelectorAll("#"+k[0])[0].value)
+				else
+					defaults[k[0]] = document.querySelectorAll("#"+k[0])[0].value
+			})
+		
+		}
+		
+		function drawPart(par, position, orientation, others){
+			
+			Array(defaults.rows*6).fill().map( (el,i) => {
+
+				var pos = [position[0], position[1]+ (i * defaults.offset)]
+				 
+				return drawDiag(par, pos,defaults.sub_length,{color:others.color, max_x: others.max_x}, defaults.d_height, defaults.offset, orientation)
+			
+			
+			}).join("")
+			return par
+		}
+		function newSVG(props={}){
+
+			var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+				s.setAttribute("width", props.width.toString());
+				s.setAttribute("height", props.height.toString());
+				s.setAttribute("stroke-linecap","round");
+				s.setAttribute("stroke-linejoin","miter");
+				s.style.position = "absolute"
+				//s.style.top = props.top.toString() + "px"
+				//s.style.left = props.left.toString() + "px"
+		   	 	s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			return s
+		}
+		
+		function createSVG(props={}){
+			var line_density = props.height / defaults.rows
+			var parent_el = props.parent || document.body
+			parent_el.appendChild(  
+				drawPart(
+					newSVG(props), 
+					[props.x, -1 * defaults.rows * defaults.offset], 
+					props.orientation,
+					{color:props.color, max_x: props.max_x, max_y: props.max_y}
+				)
+			)
+		}
+		
+		function addIframe(props={}){
+			var new_iframe = document.createElement("iframe")
+			new_iframe.width = props.width;
+			new_iframe.height = props.height;
+			new_iframe.scrolling = "no"
+			new_iframe.seamless = "seamless"
+			new_iframe.frameBorder="0"
+			new_iframe.onload = function(){ this.contentWindow.document.documentElement.scrollLeft = props.scrollLeft }
+			new_iframe.src = `http://localhost:3000/nozig.html?${props.urls}`
+			document.body.append(new_iframe)
+			return new_iframe
+		}
+
+		function redraw(){
+			Array.from(document.querySelectorAll("svg")).map(s => s.remove())
+
+			gatherFormVaues()
+	
+			starting_point= cur = [0,0]
+			
+			var common = {
+				max_stroke: 9,
+				offset: 18,
+				y_func: encodeURIComponent('x_d'),
+				sub_length: 10
+			}
+			
+			var common_part = Object.entries(common).map( a => a.join("=")).join("&")
+			
+			addIframe({width: 400, height: 800, scrollLeft: 0, urls: `offset_x=0&orientation=-1&${common_part}`})
+			addIframe({width: 400, height: 800, scrollLeft: 0, urls: `offset_x=401&orientation=1&${common_part}`})
+			addIframe({width: 400, height: 800, scrollLeft: 0, urls: `offset_x=802&orientation=-1&${common_part}`})
+			addIframe({width: 400, height: 800, scrollLeft: 0, urls: `offset_x=1203&orientation=1&${common_part}`})
+			
+			//addIframe({width: 400, height: 800, scrollLeft: 0, urls: "offset_x=400&orientation=1&offset=30&sub_length=12"})
+			//addIframe({width: 400, height: 800, scrollLeft: 0, urls: "offset_x=800&orientation=-1&offset=30&sub_length=12"})
+			//addIframe({width: 400, height: 800, scrollLeft: 0, urls: "offset_x=1200&orientation=1&offset=30&sub_length=12"})
+			/*
+			var parentsvg = newSVG({ width:size, height: size})
+			document.body.appendChild(parentsvg)
+			createSVG({parent: parentsvg, x:0, width:size, height: size,  max_x: half_size, max_y:half_size,orientation: 1,color:"#000"})
+			createSVG({parent: parentsvg, x:half_size, width:size, height: size, max_x: size, max_y:half_size,orientation: -1, color:"#000"})
+			*/
+
+		}
+
+		var toggle = function() {
+		    var on = false;
+		    return function() {
+		    if(!on) {
+		        on = true;
+		        //Do stuff if ON
+				console.log("toggle  1")
+				Array.from(document.querySelectorAll("canvas, 		.image_upload")).map(e => e.style.visibility = "visible")
+		        return;
+		    }
+		    //Do stuff if OFF
+				console.log("toggle  off")
+			
+				Array.from(document.querySelectorAll("canvas, 		.image_upload")).map(e => e.style.visibility = "hidden")
+			
+		    on = false;
+		}
+		}();
+
+		toggle(); //Set OFF as default    
+
+		document.addEventListener('keydown',function(e) {
+		   var key = e.keyCode || e.which;
+		   //backspace
+		   console.log(e.keyCode)
+		   if(key === 112) {
+		      toggle();
+		   }
+		}, false);
+
+
+
+
+		function handleImageFiles(e) {	
+			//var url = URL.createObjectURL("samples/face_big.png");
+			var img = new Image();
+			img.crossOrigin = "Anonymous";
+			//img.src = "samples/dude.jpg"
+			//img.src = "samples/face2.png"
+			img.src = "face2_large.png"
+			
+			img.onload = function() {
+				cvs.width = img.width;
+				cvs.height = img.height;
+				ctx.drawImage(img, 0, 0);
+				redraw();
+			}
+		}
+
+
+		function setupImg() {
+			Object.entries(defaults).map( (k,v) => {
+				var i = document.createElement("input")
+				var l = document.createElement("label")
+				var f = document.createElement("div")
+				i.type = "text"
+				i.value = k[1]
+				i.id = i.name = k[0]
+				i.onblur = function() { 
+					console.log("lost focus");
+					redraw() 
+				}
+				l.textContent = k[0]
+				f.appendChild(l)
+				f.appendChild(i)
+				f.className = k[0]
+				document.querySelectorAll("div")[0].appendChild(f)
+			})
+			URL = window.URL;
+			cvs = document.getElementById('canvas');
+			ctx = cvs.getContext('2d');
+			res = document.getElementById('results');
+			inputImage = document.getElementById('inputImage');
+			Array.from(document.querySelectorAll( ".d_height,.orientation, .lengths,  .rows, .fill_color")).map(a => a.style.display = "none")
+			
+			handleImageFiles()
+			
+			//inputImage.addEventListener('change', handleImageFiles, false);
+			//cvs.addEventListener('mousemove', mousePos, false);
+	
+		}
+
+
+		//document.addEventListener('DOMContentLoaded', redraw, false);
+		document.addEventListener('DOMContentLoaded', setupImg, false);
+
+		</script>
+		<title>ZZIG</title>
+	</head>
+	<body>
+		<div class='image_upload'>
+
+		</div>
+		<canvas id="canvas"></canvas>
+
+		
+	</body>
+</html>

@@ -1,53 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-<link rel="shortcut icon" href="images/download.jpeg">
-		<style>
-		.loader{
-			position: absolute;
-			top: 0px;
-			left: 0px;
-			background: none;
-			border: solid 10px red;
-			margin: 20px;
-			padding: 20px;
-			z-index: 100;
-			color: red;
-			font-weight: bold;
-			text-transform: uppercase;
-			font-family: Helvetica;
-		}
-		
-		.loader::before{
-			content: "Redrawing";
-		}
-
-		svg{
-
-		}
-		
-		path {
-			opacity:1;
-			stroke-linejoin: round;
-		}
-
-		.image_upload{		
-			position: absolute;
-			bottom: 0px;
-			right: 0px;
-			background:#fff;
-			opacity:0.7;
-		}
-
-		canvas {
-			position: absolute;
-			top: 0px;
-			right: 0px;
-			width:300px;
-		}
-
-		</style>
-		
+		<link rel="stylesheet" href="stylesheets/style.css">
 		<script>
 			
 		var t = 0;
@@ -64,6 +18,8 @@
 		var rect;
 		var stroke_der = 0.2;
 		var animate = false
+		var size = 800
+		var half_size = parseInt(size * 0.5)
 		//var rect;
 
 
@@ -79,8 +35,19 @@
 			max_stroke: 7.0,
 			min_stroke: 1.0,
 			stroke_color:"#000",
-			fill_color:"#fff"
+			fill_color:"#fff",
+			y_func: "x_d",
+			offset_x: 0,
+			offset_y: 0
 		}
+		
+		const queryString = window.location.search;
+		const urlParams = new URLSearchParams(queryString);
+		[...urlParams.keys()].map(k => {
+			console.log(defaults[k], " changed to ")
+			defaults[k] = typeof defaults[k] === "string" ? urlParams.get(k) :  parseFloat(urlParams.get(k))
+			console.log(defaults[k] , " Now ", defaults)
+		})
 
 		function getRandomArbitrary(min, max) {
 			return Math.random() * (max - min) + min;
@@ -98,24 +65,29 @@
 			Array.from(loader).map(a => a.parentNode.remove(a));
 		}
 		
-		function drawDiag(par, position,lengths=defaults.lengths, svg_props, d_height=defaults.d_height, offset=defaults.offset, orientation=defaults.orientation){
+		function drawDiag(par, position,lengths=defaults.lengths, svg_props, d_height=defaults.d_height, offset=defaults.offset, orientation=defaults.orientation, offset_x=defaults.offset_x, offset_y=defaults.offset_y){
 			rect = cvs.getBoundingClientRect();
 			//console.log("args were", arguments)
 			//var svg_img = document.querySelector("svg")
 			var buffer = "";
 			cur = position
-			var x_d = defaults.d_height/defaults.sub_length; 
+			var x_d;
+			var y_d;
+			var itemize=0;
+			x_d = defaults.d_height/defaults.sub_length; 
+			y_d =   x_d * orientation
 			
-				var difff= defaults.max_stroke - defaults.min_stroke
+			
+			var difff= defaults.max_stroke - defaults.min_stroke
 			Array(lengths).fill().map((i,item) =>  { 
 
 				Array(defaults.sub_length).fill().map((j,item2) =>  {
 					if(cur[0] > svg_props.max_x){
 						return
 					}
-					
-					var y_d = ((1 + (item2*0.009)) * x_d * orientation )
-					var p = `M${cur[0]} ${cur[1]}`;
+					itemize++;
+					y_d = orientation * eval(defaults.y_func)
+					var p = `m${cur[0]} ${cur[1]}`;
 					cur[0] += x_d;
 					cur[1] += y_d;
 					p +=  ` l${x_d} ${y_d }` 
@@ -125,7 +97,7 @@
 
 						var x =  cur[0];//parseInt(x_i - rect.left);
 						var y =  cur[1];//parseInt(y_i - rect.top);
-						var pix = ctx.getImageData(x, y, 1, 1).data
+						var pix = ctx.getImageData(x+offset_x, y+offset_y, 1, 1).data
 						var red =  (pix[0]/255.0)
 						var green = (pix[1]/255.0)
 						var blue =  (pix[2]/255.0)
@@ -157,7 +129,7 @@
 		function gatherFormVaues(){
 			Object.entries(defaults).map( (k) => {
 				console.log("Found #", k[0], document.querySelectorAll("#"+k[0])[0].value)
-				if( !document.querySelectorAll("#"+k[0])[0].value.match(/^#/gi))
+				if( !document.querySelectorAll("#"+k[0])[0].value.match(/^#|[^\d\.\-]/gi))
 					defaults[k[0]] = parseFloat(document.querySelectorAll("#"+k[0])[0].value)
 				else
 					defaults[k[0]] = document.querySelectorAll("#"+k[0])[0].value
@@ -204,19 +176,47 @@
 		}
 
 		function redraw(){
-Array.from(document.querySelectorAll("svg")).map(s => s.remove())
+			Array.from(document.querySelectorAll("svg")).map(s => s.remove())
 
 			gatherFormVaues()
 	
 			starting_point= cur = [0,0]
 
-			createSVG({x:0, width:1600, height: 1600,  max_x: 800, max_y:800,orientation: 1,color:"#000"})
-			createSVG({x:800, width:1600, height: 1600, max_x: 1600, max_y:800,orientation: -1, color:"#000"})
+			createSVG({x:0, width:size, height: size,  max_x: half_size, max_y:half_size,color:"#000"})
+			//createSVG({x:half_size, width:size, height: size, max_x: size, max_y:half_size,orientation: -1, color:"#000"})
 			
 
 		}
 
+		var toggle = function() {
+		    var on = false;
+		    return function() {
+		    if(!on) {
+		        on = true;
+		        //Do stuff if ON
+				console.log("toggle  1")
+				Array.from(document.querySelectorAll("canvas, .image_upload")).map(e => e.style.visibility = "visible")
+		        return;
+		    }
+		    //Do stuff if OFF
+			console.log("toggle  off")
+			
+				Array.from(document.querySelectorAll("canvas, 		.image_upload")).map(e => e.style.visibility = "hidden")
+			
+		    on = false;
+		}
+		}();
 
+		toggle(); //Set OFF as default    
+
+		document.addEventListener('keydown',function(e) {
+		   var key = e.keyCode || e.which;
+		   //backspace
+		   console.log(e.keyCode)
+		   if(key === 112) {
+		      toggle();
+		   }
+		}, false);
 
 
 
@@ -227,7 +227,7 @@ Array.from(document.querySelectorAll("svg")).map(s => s.remove())
 			img.crossOrigin = "Anonymous";
 			//img.src = "samples/dude.jpg"
 			//img.src = "samples/face2.png"
-			img.src = "samples/face2_large.png"
+			img.src = "face2_large.png"
 			
 			img.onload = function() {
 				cvs.width = img.width;
@@ -253,6 +253,7 @@ Array.from(document.querySelectorAll("svg")).map(s => s.remove())
 				l.textContent = k[0]
 				f.appendChild(l)
 				f.appendChild(i)
+				f.className = k[0]
 				document.querySelectorAll("div")[0].appendChild(f)
 			})
 			URL = window.URL;
@@ -260,7 +261,10 @@ Array.from(document.querySelectorAll("svg")).map(s => s.remove())
 			ctx = cvs.getContext('2d');
 			res = document.getElementById('results');
 			inputImage = document.getElementById('inputImage');
+			Array.from(document.querySelectorAll( ".d_height,.orientation, .lengths,  .rows, .fill_color")).map(a => a.style.display = "none")
+			
 			handleImageFiles()
+			
 			//inputImage.addEventListener('change', handleImageFiles, false);
 			//cvs.addEventListener('mousemove', mousePos, false);
 	
@@ -275,9 +279,7 @@ Array.from(document.querySelectorAll("svg")).map(s => s.remove())
 	</head>
 	<body>
 		<div class='image_upload'>
-			<p>
-				Open image: <input type="file" id="inputImage">
-			</p>
+
 		</div>
 		<canvas id="canvas"></canvas>
 

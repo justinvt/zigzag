@@ -1,8 +1,64 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+body{
+	font: 0.7em sans-serif;
+	margin: 0;
+	padding: 0;
+	border:0;
+	;}
+
+.loader{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background: none;
+	border: solid 10px red;
+	margin: 20px;
+	padding: 20px;
+	z-index: 100;
+	color: red;
+	font-weight: bold;
+	text-transform: uppercase;
+	font-family: Helvetica;
 }
 
-a {
-  color: #00B7FF;
+.loader::before{
+	content: "Redrawing";
+}
+
+svg{
+	position: absolute;
+	
+
+}
+
+path {
+	opacity:1;
+	stroke-linejoin: round;
+}
+
+.image_upload{		
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	background:#fff;
+	opacity:0.97;
+	z-index: 10;
+	visibility: hidden;
+}
+
+.image_upload label{		
+	display: block;
+}
+
+.image_upload div{
+		margin:10px;
+	}
+	
+	
+
+canvas {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	width:300px;
+		visibility: hidden;
 }
