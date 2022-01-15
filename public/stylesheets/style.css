@@ -3,6 +3,8 @@ body{
 	margin: 0;
 	padding: 0;
 	border:0;
+	text-align: center;
+	background: #efefef;
 	;}
 
 #loader{
@@ -19,22 +21,33 @@ body{
 	text-transform: uppercase;
 	font-family: Helvetica;
 	visibility: visible;
+	display:none;
+	
 }
 
 
+
 svg{
-	position: absolute;
-	
+	padding: 0;
+	margin: auto 0;
+
 
 }
 
 path {
 	opacity:1;
 	stroke-linejoin: round;
+
 }
 
 circle{
 	display:none;
+}
+
+svg path{;}
+
+g {
+	stroke: #444;
 }
 
 .image_upload{		

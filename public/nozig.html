@@ -22,7 +22,7 @@
 		var rect;
 		var stroke_der = 0.2;
 		var animate = false
-		var size = 1600
+		var size = 800
 		var half_size = parseInt(size * 0.5)
 		//var rect;
 		var speed
@@ -30,13 +30,13 @@
 
 		var defaults = {
 			orientation: 1,
-			offset: 20,
-			lengths: 25,
-			d_height: 255,
+			offset: 25,
+			lengths: 40,
+			d_height: 315,
 			rows: 40,
 			randomness: 0,
-			sub_length: 5,
-			max_stroke:5.0,
+			sub_length: 50,
+			max_stroke:4.0,
 			min_stroke: 1.0,
 			stroke_color:"#000",
 			fill_color:"#fff",
@@ -165,7 +165,7 @@
 					var path1 = document.createElementNS("http://www.w3.org/2000/svg", 'path');
 					path1.setAttribute('d', p);
 					path1.setAttribute('fill', 'none');
-					path1.setAttribute('stroke', svg_props.color);
+					//path1.setAttribute('stroke', svg_props.color);
 					path1.setAttribute('stroke-width', pix_str.toFixed(4) + "px");
 					path1.setAttribute('thickness', pix_str.toFixed(4) );
 					row.appendChild(path1)
@@ -212,7 +212,7 @@
 				s.setAttribute("height", props.height.toString());
 				s.setAttribute("stroke-linecap","round");
 				s.setAttribute("stroke-linejoin","miter");
-				s.style.position = "absolute"
+			//	s.style.position = "absolute"
 				//s.style.top = props.top.toString() + "px"
 				//s.style.left = props.left.toString() + "px"
 		   	 	s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
@@ -286,7 +286,7 @@
 			img.crossOrigin = "Anonymous";
 			//img.src = "samples/dude.jpg"
 			//img.src = "samples/face2.png"
-			img.src = "face2_large.png"
+			img.src = "face2.png"
 			
 			img.onload = function() {
 				cvs.width = img.width;
@@ -320,7 +320,7 @@
 			ctx = cvs.getContext('2d');
 			res = document.getElementById('results');
 			inputImage = document.getElementById('inputImage');
-			Array.from(document.querySelectorAll( ".d_height,.orientation, .lengths,  .rows, .fill_color")).map(a => a.style.display = "none")
+			//Array.from(document.querySelectorAll( ".d_height,.orientation, .lengths,  .rows, .fill_color")).map(a => a.style.display = "none")
 			
 			handleImageFiles()
 			

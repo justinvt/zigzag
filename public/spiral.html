@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<link rel="stylesheet" href="stylesheets/style.css">
 
 		<script>
 			//var svg_d = document.createElement("svg")
@@ -21,14 +22,15 @@
 			var defaults = {
 				max_stroke: 3.0,  // 3-9 is good
 				min_stroke: 1, // 1 - 3 is good
-				revolutions: 50, // 50-100 is good
+				revolutions: 30, // 50-100 is good
 				resolution: 0.01 // 0.1 - 0.005 // this is the amoount we iterate through THETA  to sample the next pixel
 			}
 		function drawDiag(){
 			rect = cvs.getBoundingClientRect();
 			var nsvg = newSVG({width: 800, height: 800})
 			
-
+			var group = newGroup()
+	
 
 			for (let theta=0;theta < defaults.revolutions * 2 * Math.PI ; theta += defaults.resolution){
 				var r = a + (b * theta)
@@ -65,17 +67,17 @@
 
 				}          
 				path1.setAttribute('d', 
-					 `m${last_point[0]} ${last_point[1]}  L${current_point[0]} ${current_point[1] }`
+					 `M${last_point[0]},${last_point[1]}L${current_point[0]},${current_point[1] }`
 				);
 				path1.setAttribute('fill', 'none');
-				path1.setAttribute('stroke', "#000");
+		       // path1.setAttribute('stroke', "#000");
 				path1.setAttribute('stroke-width', pix_str.toFixed(4) + "px");
 				path1.setAttribute("origin", JSON.stringify(current_point))
 				path1.setAttribute("colors", JSON.stringify([red, green, blue]))
 				//path1.setAttribute('thickness', pix_str.toFixed(4) );
-				nsvg.appendChild(path1)
+				group.appendChild(path1)
 			}
-			
+			nsvg.appendChild(group)
 			return nsvg
 			
 		}
@@ -87,7 +89,7 @@
 			var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 				s.setAttribute("width", props.width.toString());
 				s.setAttribute("height", props.height.toString());
-				//s.setAttribute("stroke-linecap","round");
+				s.setAttribute("stroke-linecap","butt");
 				//s.setAttribute("stroke-linejoin","miter");
 				//s.style.position = "absolute"
 				//s.style.top = props.top.toString() + "px"
@@ -97,7 +99,23 @@
 			return s
 		}
 		
+		
+		function newGroup(props={width: 800, height: 800}){
 
+			var s = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+			s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			//s.setAttribute("row-number", row_x)
+				//s.setAttribute("width", props.width.toString());
+			//	s.setAttribute("height", props.height.toString());
+				//s.setAttribute("stroke-linecap","round");
+				//s.setAttribute("stroke-linejoin","miter");
+				//s.style.position = "absolute"
+				//s.style.top = props.top.toString() + "px"
+				//s.style.left = props.left.toString() + "px"
+		   	 	//s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			//s.style.visibility =  "hidden";
+			return s
+		}
 
 		function redraw(){
 
