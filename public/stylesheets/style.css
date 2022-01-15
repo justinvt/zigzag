@@ -5,11 +5,11 @@ body{
 	border:0;
 	;}
 
-.loader{
+#loader{
 	position: absolute;
 	top: 0px;
 	left: 0px;
-	background: none;
+	background:red;
 	border: solid 10px red;
 	margin: 20px;
 	padding: 20px;
@@ -18,11 +18,9 @@ body{
 	font-weight: bold;
 	text-transform: uppercase;
 	font-family: Helvetica;
+	visibility: visible;
 }
 
-.loader::before{
-	content: "Redrawing";
-}
 
 svg{
 	position: absolute;
@@ -33,6 +31,10 @@ svg{
 path {
 	opacity:1;
 	stroke-linejoin: round;
+}
+
+circle{
+	display:none;
 }
 
 .image_upload{		

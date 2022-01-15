@@ -4,6 +4,10 @@
 		<link rel="stylesheet" href="stylesheets/style.css">
 		<script>
 			
+			Array.prototype.rand = function(){
+				return this.at(Math.floor(Math.random() * this.length))
+			}
+			
 		var t = 0;
 		var starting_point=[0,0]
 		var row_x=0;
@@ -18,10 +22,10 @@
 		var rect;
 		var stroke_der = 0.2;
 		var animate = false
-		var size = 800
+		var size = 1600
 		var half_size = parseInt(size * 0.5)
 		//var rect;
-
+		var speed
 
 
 		var defaults = {
@@ -31,16 +35,21 @@
 			d_height: 255,
 			rows: 40,
 			randomness: 0,
-			sub_length: 80,
-			max_stroke: 7.0,
+			sub_length: 5,
+			max_stroke:5.0,
 			min_stroke: 1.0,
 			stroke_color:"#000",
 			fill_color:"#fff",
-			y_func: "x_d",
+			y_func: "3.0 * Math.sin(1.4 * itemize * speed)",
 			offset_x: 0,
 			offset_y: 0
 		}
-		
+		var itemize = 0;
+		var velocities = [0.99, 0.9, 0.7]
+		var start_v = 0
+		var speed = 0;
+		var next_stop;
+		var cycles=200;
 		const queryString = window.location.search;
 		const urlParams = new URLSearchParams(queryString);
 		[...urlParams.keys()].map(k => {
@@ -48,21 +57,46 @@
 			defaults[k] = typeof defaults[k] === "string" ? urlParams.get(k) :  parseFloat(urlParams.get(k))
 			console.log(defaults[k] , " Now ", defaults)
 		})
+		
+	
+		
 
 		function getRandomArbitrary(min, max) {
 			return Math.random() * (max - min) + min;
 		}
 		
 		function showLoader() {
-			var loader = document.createElement("div")
-			loader.className = "loader"
-			loader.innerHTML = "REDRAWING"
-			document.body.prepend(loader)//.append(document.body.innerHTML)
+			Array.from(document.querySelectorAll("svg")).map(a => 
+				a.style.visibility = "hidden"
+			)
+			console.log("Sshowoing Loader")
+			if(!document.querySelector("#loader")){ 
+			    var loader = document.createElement("div")
+				loader.className = "loader"
+				loader.id = "loader"
+				loader.innerHTML = "REDRAWING"
+				document.body.prepend(loader)
+				loader.style.visibility = "visible"
+			}
+			else{
+				   var loader = document.querySelector("#loader")
+			}
+		//	Array.from(document.querySelectorAll("#loader")).map(a => 
+				
+			//)
+//.append(document.body.innerHTML)
 		}
 
 		function removeLoader() {
-			var loader =  document.getElementsByClassName("loader")
-			Array.from(loader).map(a => a.parentNode.remove(a));
+				console.log("Removeg Loader")
+
+
+		//document.querySelector("#loader").style.visibility = "hidden"
+						Array.from(document.querySelectorAll("svg")).map(a => 
+				a.style.visibility = "visible"
+			)
+			//)
+			//Array.from(loader).map(a => a.parentNode.remove(a));
 		}
 		
 		function drawDiag(par, position,lengths=defaults.lengths, svg_props, d_height=defaults.d_height, offset=defaults.offset, orientation=defaults.orientation, offset_x=defaults.offset_x, offset_y=defaults.offset_y){
@@ -73,10 +107,11 @@
 			cur = position
 			var x_d;
 			var y_d;
-			var itemize=0;
 			x_d = defaults.d_height/defaults.sub_length; 
 			y_d =   x_d * orientation
 			
+			var row = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+			row.setAttribute("row-number", row_x)
 			
 			var difff= defaults.max_stroke - defaults.min_stroke
 			Array(lengths).fill().map((i,item) =>  { 
@@ -85,6 +120,21 @@
 					if(cur[0] > svg_props.max_x){
 						return
 					}
+					if(itemize % Math.floor(cycles) == 0){
+						//console.log("speed ", speed)
+						//var current_vel = velocities.rand()
+					    next_stop =  getRandomArbitrary(20, 27)
+						cycles = getRandomArbitrary(50, 300)
+					}
+				//if (!next_stop){var next_stop = [1,1.4,1.1, 0.9].rand()}
+					////if(Math.abs( next_stop - speed) < 0.005){
+					//	start_v =  next_stop
+					//	next_stop = [1,1.4,1.1, 0.9].rand()
+					
+						//}
+					
+					speed = speed + (next_stop - speed) * 0.6
+					
 					itemize++;
 					y_d = orientation * eval(defaults.y_func)
 					var p = `m${cur[0]} ${cur[1]}`;
@@ -107,28 +157,33 @@
 
 
 					}
-					
+					var p1 = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+					p1.setAttribute('cx', cur[0]);
+					p1.setAttribute('cy',cur[1]);
+					p1.setAttribute('r', "3");
+					row.appendChild(p1)
 					var path1 = document.createElementNS("http://www.w3.org/2000/svg", 'path');
 					path1.setAttribute('d', p);
 					path1.setAttribute('fill', 'none');
 					path1.setAttribute('stroke', svg_props.color);
 					path1.setAttribute('stroke-width', pix_str.toFixed(4) + "px");
-
-					par.appendChild(path1)
+					path1.setAttribute('thickness', pix_str.toFixed(4) );
+					row.appendChild(path1)
 				})
 
 			})
 			
+			par.appendChild(row)
 		//console.log("buff", buff)
 		//svg_img.innerHTML += buff
 			cur[0] = position[0]
 			row_x+=1
-			return buffer 
+ 
 		}
 		
 		function gatherFormVaues(){
 			Object.entries(defaults).map( (k) => {
-				console.log("Found #", k[0], document.querySelectorAll("#"+k[0])[0].value)
+				//console.log("Found #", k[0], document.querySelectorAll("#"+k[0])[0].value)
 				if( !document.querySelectorAll("#"+k[0])[0].value.match(/^#|[^\d\.\-]/gi))
 					defaults[k[0]] = parseFloat(document.querySelectorAll("#"+k[0])[0].value)
 				else
@@ -143,12 +198,13 @@
 
 				var pos = [position[0], position[1]+ (i * defaults.offset)]
 				 
-				return drawDiag(par, pos,defaults.sub_length,{color:others.color, max_x: others.max_x}, defaults.d_height, defaults.offset, orientation)
+				 drawDiag(par, pos,defaults.sub_length,{color:others.color, max_x: others.max_x}, defaults.d_height, defaults.offset, orientation)
 			
 			
-			}).join("")
+			})
 			return par
 		}
+		
 		function newSVG(props={}){
 
 			var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -160,6 +216,7 @@
 				//s.style.top = props.top.toString() + "px"
 				//s.style.left = props.left.toString() + "px"
 		   	 	s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			//s.style.visibility =  "hidden";
 			return s
 		}
 		
@@ -176,13 +233,15 @@
 		}
 
 		function redraw(){
+			 showLoader()
 			Array.from(document.querySelectorAll("svg")).map(s => s.remove())
 
 			gatherFormVaues()
 	
 			starting_point= cur = [0,0]
 
-			createSVG({x:0, width:size, height: size,  max_x: half_size, max_y:half_size,color:"#000"})
+			createSVG({x:0, width:size, height: size,  max_x: size, max_y:size,color:"#000"})
+			removeLoader()
 			//createSVG({x:half_size, width:size, height: size, max_x: size, max_y:half_size,orientation: -1, color:"#000"})
 			
 
@@ -201,7 +260,7 @@
 		    //Do stuff if OFF
 			console.log("toggle  off")
 			
-				Array.from(document.querySelectorAll("canvas, 		.image_upload")).map(e => e.style.visibility = "hidden")
+				Array.from(document.querySelectorAll("canvas, .image_upload")).map(e => e.style.visibility = "hidden")
 			
 		    on = false;
 		}

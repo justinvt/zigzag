@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+		<script>
+			//var svg_d = document.createElement("svg")
+			var img;
+			var URL;
+			var cvs;
+			var ctx;
+			var res; 
+			var rect;
+			var angles = []
+			var coords = []
+            var range = 8 * Math.PI
+			var segment = ( 2 * Math.PI ) / 80
+			var a = closeness_to_origin = 1
+			var b = density = 2
+			var size = 800;
+			var offsets = [400, 400]
+			var defaults = {
+				max_stroke: 3.0,  // 3-9 is good
+				min_stroke: 1, // 1 - 3 is good
+				revolutions: 50, // 50-100 is good
+				resolution: 0.01 // 0.1 - 0.005 // this is the amoount we iterate through THETA  to sample the next pixel
+			}
+		function drawDiag(){
+			rect = cvs.getBoundingClientRect();
+			var nsvg = newSVG({width: 800, height: 800})
+			
+
+
+			for (let theta=0;theta < defaults.revolutions * 2 * Math.PI ; theta += defaults.resolution){
+				var r = a + (b * theta)
+				var polar_coords = [theta, r]
+				var cart_coords = [ offsets[0] + r * Math.cos(theta), offsets[1] + r *  Math.sin(theta)]
+				//cart_coords = cart_coords.map(a => return [a[0] + 400, a[1] + 400])
+				angles.push(polar_coords)
+				coords.push(cart_coords)
+				/*
+				var p1 = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+				p1.setAttribute('cx', cart_coords[0]);
+				p1.setAttribute('cy',cart_coords[1]);
+				p1.setAttribute('r', "1");
+				nsvg.appendChild(p1)
+				*/
+
+				var last_point = coords.at(-2)
+				var current_point = coords.at(-1)
+				if(!last_point)	{
+					last_point = offsets
+				}
+			    var path1 = document.createElementNS("http://www.w3.org/2000/svg", 'path');		
+				
+				if(ctx && ctx.getImageData(current_point[0], current_point[1], 1, 1)){
+	//var rect = cvs.getBoundingClientRect();
+					var pix = ctx.getImageData(current_point[0], current_point[1], 1, 1).data
+					var red =  parseFloat(pix[0]) / 255.0
+					var green = parseFloat(pix[1]) / 255.0
+					var blue =  parseFloat(pix[2]) / 255.0
+					var darkness = 1 - ((red * green * blue)  ** 3)
+			
+					var pix_str = defaults.min_stroke + ( (defaults.max_stroke - defaults.min_stroke) * darkness ) 
+
+
+				}          
+				path1.setAttribute('d', 
+					 `m${last_point[0]} ${last_point[1]}  L${current_point[0]} ${current_point[1] }`
+				);
+				path1.setAttribute('fill', 'none');
+				path1.setAttribute('stroke', "#000");
+				path1.setAttribute('stroke-width', pix_str.toFixed(4) + "px");
+				path1.setAttribute("origin", JSON.stringify(current_point))
+				path1.setAttribute("colors", JSON.stringify([red, green, blue]))
+				//path1.setAttribute('thickness', pix_str.toFixed(4) );
+				nsvg.appendChild(path1)
+			}
+			
+			return nsvg
+			
+		}
+		
+
+		
+		function newSVG(props={width: 800, height: 800}){
+
+			var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+				s.setAttribute("width", props.width.toString());
+				s.setAttribute("height", props.height.toString());
+				//s.setAttribute("stroke-linecap","round");
+				//s.setAttribute("stroke-linejoin","miter");
+				//s.style.position = "absolute"
+				//s.style.top = props.top.toString() + "px"
+				//s.style.left = props.left.toString() + "px"
+		   	 	s.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			//s.style.visibility =  "hidden";
+			return s
+		}
+		
+
+
+		function redraw(){
+
+			document.body.append(
+				drawDiag()
+			)
+
+		}
+		
+
+		function handleImageFiles(e) {	
+			//var url = URL.createObjectURL("samples/face_big.png");
+			img = new Image();
+			img.crossOrigin = "Anonymous";
+			//img.src = "samples/dude.jpg"
+			//img.src = "samples/face2.png"
+			img.src = "face.png"
+			
+			img.onload = function() {
+				cvs.width = img.width;
+				cvs.height = img.height;
+				ctx.drawImage(img, 0, 0);
+				redraw();
+			}
+		}
+
+
+		function setupImg() {
+			/*
+			Object.entries(defaults).map( (k,v) => {
+				var i = document.createElement("input")
+				var l = document.createElement("label")
+				var f = document.createElement("div")
+				i.type = "text"
+				i.value = k[1]
+				i.id = i.name = k[0]
+				i.onblur = function() { 
+					console.log("lost focus");
+					redraw() 
+				}
+				l.textContent = k[0]
+				f.appendChild(l)
+				f.appendChild(i)
+				f.className = k[0]
+				//document.querySelectorAll("div")[0].appendChild(f)
+			})
+			*/
+			URL = window.URL;
+			cvs = document.getElementById('canvas');
+			ctx = cvs.getContext('2d');
+			res = document.getElementById('results');
+			//inputImage = document.getElementById('inputImage');
+			//Array.from(document.querySelectorAll( ".d_height,.orientation, .lengths,  .rows, .fill_color")).map(a => a.style.display = "none")
+			
+			handleImageFiles()
+			
+			//inputImage.addEventListener('change', handleImageFiles, false);
+			//cvs.addEventListener('mousemove', mousePos, false);
+	
+		}
+				document.addEventListener('DOMContentLoaded', setupImg, false);
+
+
+		</script>
+		<title>ZZIG</title>
+	</head>
+	<body>
+
+
+			<canvas id="canvas" style="display:none"></canvas>
+	</body>
+	<script>
+			
+		</script>
+</html>
