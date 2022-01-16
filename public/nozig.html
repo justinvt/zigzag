@@ -307,8 +307,14 @@
 			img.crossOrigin = "Anonymous";
 			//img.src = "samples/dude.jpg"
 			//img.src = "samples/face2.png"
-			img.src = "face2.png"
+			var url_photo = window.location.search.match(/(?<=photo\=)[^&]+/)
+			if(!url_photo){
+				img.src = "face.png"}
+			else{
+				url_photo = url_photo[0].replace(/dot/,'.') 
+				img.src = url_photo
 			
+			}
 			img.onload = function() {
 				cvs.width = img.width;
 				cvs.height = img.height;
