@@ -9,6 +9,7 @@
 			}
 			
 		var t = 0;
+		var free_var=1;
 		var starting_point=[0,0]
 		var row_x=0;
 		var num_len;
@@ -44,6 +45,26 @@
 			offset_x: 0,
 			offset_y: 0
 		}
+		/*
+		Some cool y_func options:
+		
+		aperiodic squiggles 
+		3.0 * Math.sin(1.4 * itemize * speed)
+		
+		periodic sinusoidal
+		3.0 * Math.sin(1.4 * itemize)
+		
+		Original zigzag, changing orientation
+		everytime "item" is incremented
+		(item is derived from the "d_length or length default - i forget")
+		x_d * (item % 2 == 0 ? 1 : -1)
+		
+		horizontal lines
+		0
+		
+		*/
+		
+		
 		var itemize = 0;
 		var velocities = [0.99, 0.9, 0.7]
 		var start_v = 0
