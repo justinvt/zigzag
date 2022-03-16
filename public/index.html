@@ -3,6 +3,9 @@
 	<head>
 <link rel="shortcut icon" href="images/download.jpeg">
 		<style>
+			
+
+			
 		.loader{
 			position: absolute;
 			top: 0px;
@@ -144,7 +147,9 @@
 						var y_i = cur[1]
 						var x =  cur[0];//parseInt(x_i - rect.left);
 						var y =  cur[1];//parseInt(y_i - rect.top);
-						var pix = ctx.getImageData(x, y, 1, 1).data
+						var imgData = ctx.getImageData(x, y, 50, 50)
+						ctx.putImageData(imgData, 10, 70);
+						var pix = ctx.getImageData(x, y, 2, 50).data
 						var red =  (pix[0]/255)
 						var green = (pix[1]/255)
 						var blue =  (pix[2]/255)
@@ -209,6 +214,10 @@
 
 		}
 
+		function toggleBlur() {
+		  this.classList.toggle('blur');
+		}
+
 
 
 
@@ -220,6 +229,7 @@
 			img.crossOrigin = "Anonymous";
 			//img.src = "samples/dude.jpg"
 			//img.src = "samples/face2.png"
+			
 			var url_photo = window.location.search.match(/(?<=photo\=)[^&]+/)
 			if(!url_photo){
 				img.src = "face.png"}
@@ -234,11 +244,14 @@
 				cvs.height = img.height;
 				ctx.drawImage(img, 0, 0);
 				redraw();
+				toggleBlur()
 			}
-		}
 
+		}
+	
 
 		function setupImg() {
+			// Setup Image Form fields
 			Object.entries(defaults).map( (k,v) => {
 				var i = document.createElement("input")
 				var l = document.createElement("label")

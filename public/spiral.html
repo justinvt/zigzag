@@ -132,7 +132,7 @@
 			img.crossOrigin = "Anonymous";
 			//img.src = "samples/dude.jpg"
 			//img.src = "samples/face2.png"
-			var url_photo = window.location.search.match(/(?<=photo\=)[^&]+/)
+			var url_photo = window.location.search.split("=")[window.location.search.split("=").length - 1]
 			if(!url_photo){
 				img.src = "face.png"}
 			else{

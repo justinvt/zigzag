@@ -1,13 +1,14 @@
 var createError = require('http-errors');
 var express = require('express');
+var fs = require('fs');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var fs = require('fs');
+
 var cors = require('cors');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var logger = require('morgan');
+var allRouter = require('./routes/all');
 
 var app = express();
 var writer = fs.createWriteStream(path.join(__dirname, 'baccess.log'), { flags: 'a+' });
@@ -44,8 +45,23 @@ app.use('/pul', function(req, res, next) {
 	
 	res.json(save_val)  
 });
+/*
+app.use('/all', function(req, res, next) {
+	
+	const directoryPath = path.join(__dirname, 'public');
+	var file_list = []
+	fs.readdir(directoryPath, (err, files) => {
+	  	  res.render('all', { title: 'Page Title' });
+	});
+ 
+	
 
+
+});
+*/
+app.use('/all', allRouter);
 app.use('/users', usersRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

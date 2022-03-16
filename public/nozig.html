@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<link rel="apple-touch-icon" sizes="180x180" href="/ico/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="/ico/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/ico/favicon-16x16.png">
+		<link rel="manifest" href="/ico/site.webmanifest">
 		<link rel="stylesheet" href="stylesheets/style.css">
 		<script>
 			
@@ -33,10 +37,11 @@
 			orientation: 1,
 			offset: 25,
 			lengths: 40,
-			d_height: 315,
+			d_height: 75,
 			rows: 40,
+			blur_radius: 150,
 			randomness: 0,
-			sub_length: 50,
+			sub_length: 20,
 			max_stroke:4.0,
 			min_stroke: 1.0,
 			stroke_color:"#000",
@@ -135,12 +140,13 @@
 			row.setAttribute("row-number", row_x)
 			
 			var difff= defaults.max_stroke - defaults.min_stroke
+			
 			Array(lengths).fill().map((i,item) =>  { 
 
 				Array(defaults.sub_length).fill().map((j,item2) =>  {
-					if(cur[0] > svg_props.max_x){
-						return
-					}
+				//	if(cur[0] > svg_props.max_x){
+					//	return
+				//	}
 					if(itemize % Math.floor(cycles) == 0){
 						//console.log("speed ", speed)
 						//var current_vel = velocities.rand()
@@ -157,7 +163,7 @@
 					speed = speed + (next_stop - speed) * 0.6
 					
 					itemize++;
-					y_d = orientation * eval(defaults.y_func)
+					y_d = eval(defaults.y_func)
 					var p = `m${cur[0]} ${cur[1]}`;
 					cur[0] += x_d;
 					cur[1] += y_d;
@@ -168,14 +174,17 @@
 
 						var x =  cur[0];//parseInt(x_i - rect.left);
 						var y =  cur[1];//parseInt(y_i - rect.top);
-						var pix = ctx.getImageData(x+offset_x, y+offset_y, 1, 1).data
-						var red =  (pix[0]/255.0)
-						var green = (pix[1]/255.0)
-						var blue =  (pix[2]/255.0)
+						var avg_dist = [defaults.blur_radius, defaults.blur_radius ]
+						var first_point = [x  + offset_x, y + offset_y]						
+						var next_point = [x +  avg_dist[0] + offset_x, y +  avg_dist[1] + offset_y]
+						var pix = ctx.getImageData(first_point[0], first_point[1], 1, 1).data
+						var pix2 = ctx.getImageData(next_point[0], next_point[1], 1, 1).data
+						var red =  ( pix[0]/255.0 +  pix2[0]/255.0) / 2
+						var green = ( pix[1]/255.0 +  pix2[1]/255.0) / 2
+						var blue =  ( pix[2]/255.0 +  pix2[2]/255.0) / 2
 						var white = 1 - (red * green * blue)
 					
 						var pix_str = defaults.min_stroke + ( difff * white )   + getRandomArbitrary(-1*defaults.randomness,defaults.randomness) 
-
 
 					}
 					var p1 = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
@@ -246,7 +255,7 @@
 			document.body.appendChild(  
 				drawPart(
 					newSVG(props), 
-					[props.x, -1 * defaults.rows * defaults.offset], 
+					[1600, -1 * defaults.rows * defaults.offset], 
 					props.orientation,
 					{color:props.color, max_x: props.max_x, max_y: props.max_y}
 				)
@@ -254,7 +263,7 @@
 		}
 
 		function redraw(){
-			 showLoader()
+			// showLoader()
 			Array.from(document.querySelectorAll("svg")).map(s => s.remove())
 
 			gatherFormVaues()
@@ -262,7 +271,7 @@
 			starting_point= cur = [0,0]
 
 			createSVG({x:0, width:size, height: size,  max_x: size, max_y:size,color:"#000"})
-			removeLoader()
+		//	removeLoader()
 			//createSVG({x:half_size, width:size, height: size, max_x: size, max_y:half_size,orientation: -1, color:"#000"})
 			
 
@@ -309,7 +318,7 @@
 			//img.src = "samples/face2.png"
 			var url_photo = window.location.search.match(/(?<=photo\=)[^&]+/)
 			if(!url_photo){
-				img.src = "face.png"}
+				img.src = "samples/face.png"}
 			else{
 				url_photo = url_photo[0].replace(/dot/,'.') 
 				img.src = url_photo
