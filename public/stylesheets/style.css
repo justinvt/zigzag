@@ -37,7 +37,6 @@ svg{
 path {
 	opacity:1;
 	stroke-linejoin: round;
-
 }
 
 circle{
@@ -84,4 +83,9 @@ canvas {
 	right: 0px;
 	width:300px;
 		visibility: hidden;
+}
+
+li, ul {
+	    list-style-type: none !important;
+	    text-align: left;
 }

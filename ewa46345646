@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-
+		<link rel="stylesheet" href="stylesheets/sdtyle.css">
 		<script>
 			
 			Array.prototype.rand = function(){
@@ -372,23 +372,16 @@
 
 		</div>
 
-<svg height="800" width="800" style="float:left" class="pattern-swatch" xmlns="http://www.w3.org/2000/svg">
-<defs>
+		<svg height="800" width="800" style="float:left" class="pattern-swatch">
+<svg x="50" y="50" width="200">
 
-	<pattern id="diagonalHatch_1" width="3" height="3" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">'
-		<rect x="0" y="0" width="5" height="5" style="fill:#fff"/>
-	 	<line x1="0" y1="0" x2="0" y2="5" style="fill:#fff;stroke:black; stroke-width:1" />
-	</pattern>
-	<pattern id="diagonalHatch_2" width="3" height="3" patternTransform="rotate(-45 0 0)" patternUnits="userSpaceOnUse">
-	  <rect x="0" y="0" width="5" height="5" style="fill:#fff"/>
-	  <line x1="0" y1="0" x2="0" y2="5" style="fill:#fff;stroke:black; stroke-width:1" />
-	</pattern>
-
-</defs>
-<rect x="0" y="0" width="800" height="800" style="fill: url(#diagonalHatch_2) " ></rect>
-<rect x="4" y="-2" width="300" height="50" style="fill: url(#diagonalHatch_1) "> </rect>
+<path d="M0 0 L400 400 Z" fill="none" stroke="#000" stroke-width="7.0000px"></path>
 </svg>
 
+
+
+
+		</svg>
 		<canvas id="canvas"></canvas>
 
 		

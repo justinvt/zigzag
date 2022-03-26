@@ -11,10 +11,10 @@ var usersRouter = require('./routes/users');
 var allRouter = require('./routes/all');
 
 var app = express();
-var writer = fs.createWriteStream(path.join(__dirname, 'baccess.log'), { flags: 'a+' });
+var writer = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a+' });
 
 
-app.title = "ddddd"
+app.title = "zigzag"
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');

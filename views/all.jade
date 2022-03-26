@@ -2,5 +2,6 @@ extends layout
 
 block content
   ul
-    each file in [1,2,3]
-      li= file
+    each file in locals.file_list.filter(f => f.match(/html?/))
+      li
+        a(href=file)= file

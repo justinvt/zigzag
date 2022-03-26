@@ -6,14 +6,17 @@ var router = express.Router();
 /* GET home page. */
 router.get('/', function(req, res, next) {
 	
-	const directoryPath = path.join(__dirname, 'public');
+	const directoryPath = path.join("/Users/appleguest/Projects/zigzag", 'public');
 	var file_list = []
 	fs.readdir(directoryPath, (err, files) => {
 	  	 file_list = files
+		console.log(files, directoryPath)
+
+		res.render('all', {locals:{file_list:  files}});
+		console.log(err)
+
 	
 	});
- 
-	res.render('all');
 
 });
 
