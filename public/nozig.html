@@ -27,7 +27,7 @@
 		var rect;
 		var stroke_der = 0.2;
 		var animate = false
-		var size = 800
+		var size = 1600
 		var half_size = parseInt(size * 0.5)
 		//var rect;
 		var speed
@@ -138,7 +138,7 @@
 			
 			var row = document.createElementNS("http://www.w3.org/2000/svg", 'g');
 			row.setAttribute("row-number", row_x)
-			
+			offset_y, offset_x = 0, 0 
 			var difff= defaults.max_stroke - defaults.min_stroke
 			
 			Array(lengths).fill().map((i,item) =>  { 
@@ -322,7 +322,6 @@
 			else{
 				url_photo = url_photo[0].replace(/dot/,'.') 
 				img.src = url_photo
-			
 			}
 			img.onload = function() {
 				cvs.width = img.width;
@@ -351,18 +350,16 @@
 				f.className = k[0]
 				document.querySelectorAll("div")[0].appendChild(f)
 			})
+			
 			URL = window.URL;
 			cvs = document.getElementById('canvas');
 			ctx = cvs.getContext('2d');
 			res = document.getElementById('results');
 			inputImage = document.getElementById('inputImage');
 			//Array.from(document.querySelectorAll( ".d_height,.orientation, .lengths,  .rows, .fill_color")).map(a => a.style.display = "none")
-			
-			handleImageFiles()
-			
+
 			//inputImage.addEventListener('change', handleImageFiles, false);
 			//cvs.addEventListener('mousemove', mousePos, false);
-	
 		}
 
 
