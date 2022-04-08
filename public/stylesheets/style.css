@@ -39,6 +39,7 @@ path {
 	opacity:1;
 	stroke-linejoin: round;
 	stroke: #000;
+	fill: transparent;
 }
 
 circle{
@@ -63,7 +64,15 @@ filter: blur(50px);
 */
 }
 
-.panel{
+#workspace{
+
+
+	    position: absolute;
+	    clear: both;
+	    top: 0;
+	    right: 0px;
+	    width: 400px;
+
 }
 	
 .image_upload{
@@ -85,9 +94,8 @@ filter: blur(50px);
 }
 	
 canvas {
-	position: absolute;
-	top: 0px;
-	right: 0px;
+	clear: both;
+	transform: scale(0.4);
 }
 
 li, ul {
@@ -96,5 +104,5 @@ li, ul {
 }
 
 #filtered{
-	top: 400px;
+
 }
