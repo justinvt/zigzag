@@ -55,9 +55,6 @@ g{
 	height: 100% ;
 }
 
-canvas img{
-	height: 60%;
-}
 
 img, canvas {
 /*
@@ -99,5 +96,5 @@ li, ul {
 }
 
 #filtered{
-	top: 300px;
+	top: 400px;
 }
