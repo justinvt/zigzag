@@ -59,14 +59,12 @@ g{
 
 img, canvas {
 /*
--webkit-filter: blur(50px); 
-filter: blur(50px);
+//-webkit-filter: blur(50px); 
+//filter: blur(50px);
 */
 }
 
 #workspace{
-
-
 	    position: absolute;
 	    clear: both;
 	    top: 0;
