@@ -9,7 +9,9 @@ const defaults = {
 	height: 400,
 	row_spacing: 5,
 	amplitude: 1.3,
-	stroke: 0.8
+	stroke: 0.8,
+	freq_limits: [0.15, 9],
+	inverse: false
 }
 
 function applyConvolution(sourceImageData, outputImageData, kernel) {
@@ -211,15 +213,19 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 				var green = (pix[1]/255.0)
 				var blue =  (pix[2]/255.0)
 				var white =  (red * green * blue )
-				var black	=  1 - (white)^2
+				var black	= 1- white
 				var pix_str =  white
 			}
-			var  frequency = black 
+			var  frequency = defaults.inverse ? black : white 
+			frequency = Math.abs(frequency)
+			// Freq cant be 0 - NaN
+			if(frequency < defaults.freq_limits[0]){frequency = defaults.freq_limits[0]}
+				if(frequency > defaults.freq_limits[1]){frequency = defaults.freq_limits[1]}
 			var ang_frequency = frequency * (Math.PI * 2) 
 			var amplitude = defaults.amplitude
 			var fun = function(t){
-			match_vert = 0
-				match_vert = -(Math.asin(cur[1]/amplitude*ang_frequency)-t)
+			//match_vert = 0
+				//match_vert = -(Math.asin(cur[1]/amplitude*ang_frequency)-t)
 				//console.log("match", match_vert)
 				return start[1] + amplitude * Math.sin((1/ang_frequency)*(t - 0))
 			 }
@@ -277,7 +283,7 @@ var onComplete = function(){
 	drawing = newSVG()
 	workspace = createWorkspace()
 
-	image_orig = createCanvas({image_url: "images/bw.png", id: "original", appendTo: workspace,
+	image_orig = createCanvas({image_url: "images/bun0.png", id: "original", appendTo: workspace,
 		callback: function(){ 
 			canvasToCanvas(image_orig, image_filtered);
 			drawLine(drawing, image_filtered, [0,0]);
