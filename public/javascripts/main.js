@@ -7,13 +7,21 @@ var  line_history = Array(10).fill()
 const defaults = {
 	width: 400,
 	height: 400,
-	row_spacing: 5,
+	row_spacing: 7,
 	amplitude: 1.3,
-	stroke: 0.8,
-	freq_limits: [0.15, 9],
-	inverse: false
+	stroke: 0.3,
+	freq_limits: [0.2, .9],
+	inverse: 0,
+	y_bias:1,
+	x_diff: 0.2,
+	random: 0,
+	random_bias: 0.3
 }
 
+
+function randFloat(low, hight) {
+return parseFloat( (Math.random() * (hight - low) + low).toFixed(4) )
+}
 function applyConvolution(sourceImageData, outputImageData, kernel) {
   const src = sourceImageData.data;
   const dst = outputImageData.data;
@@ -194,15 +202,15 @@ function createWorkspace(){
 function frequencyMask(svg_drawing, image,start,endCondition){
 	start ||= [0,0]
 	
-	var cur = [start[0], start[1]]
+	var cur = start
 	endCondition ||= function(){ return (cur & cur[0] > svg_drawing.width & cur[1] >  svg_drawing.height & cur[0] < 0 & cur[1] < 0) }
 	var context = image.getContext('2d')
 	
 	var group = document.createElementNS("http://www.w3.org/2000/svg", 'g');
-		var line_path = `M${cur[0]} ${cur[1]} L `
+	var line_path = `M ${cur[0]} ${cur[1]} L `
 	while(cur[0] <  svg_drawing.getAttribute("width") || i < 4000){
 			
-		var x_d = 0.5
+			var x_d = defaults.x_diff
 		
 			//console.log("cursor", cur) 
 			if(context && context.getImageData(cur[0], cur[1], 1, 1)){
@@ -217,7 +225,7 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 				var pix_str =  white
 			}
 			var  frequency = defaults.inverse ? black : white 
-			frequency = Math.abs(frequency)
+			frequency = Math.abs(frequency) * randFloat(1, 1 + defaults.random)
 			// Freq cant be 0 - NaN
 			if(frequency < defaults.freq_limits[0]){frequency = defaults.freq_limits[0]}
 				if(frequency > defaults.freq_limits[1]){frequency = defaults.freq_limits[1]}
@@ -227,26 +235,15 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 			//match_vert = 0
 				//match_vert = -(Math.asin(cur[1]/amplitude*ang_frequency)-t)
 				//console.log("match", match_vert)
-				return start[1] + amplitude * Math.sin((1/ang_frequency)*(t - 0))
+				return  start[1] + amplitude * Math.sin((1/ang_frequency)*(t - 0))
 			 }
-			var y_d = fun(i)
-			 line_path += ` ${cur[0]+x_d} ${fun(i)} `
-		
-			 var slp = (fun(i)-fun(i-1 )) -  fun(i-1)
-			 var last_height=fun(i)-fun(i-1 )
-			// console.log("slp + yd)", slp, last_height)
-			
-			var last_line_drawn = [
-					[ 
-						cur[0],
-						fun(i-1)
-					], 
-					[ 
-						cur[0] + 1, 
-						fun(i) 
-					]
-			]
-			var slope = last_line_drawn[1][1] - last_line_drawn[0][1]
+			var y_d =  fun(i)
+			 line_path += ` ${cur[0]+x_d} ${y_d} `
+			 
+
+ 			//line_history.pop()
+			 //line_history.unshift(line_path)
+			 //console.log(line_history)
 
 			cur[0] += x_d;
 			//cur[1] += y_d;
@@ -258,15 +255,12 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 	full_path.setAttribute('d', line_path);
 	full_path.setAttribute('fill', 'none');
 	full_path.setAttribute('stroke', "#000");
-		full_path.setAttribute('freq_over_one', 1/frequency);
-			full_path.setAttribute('freq', frequency);
-		full_path.setAttribute('start_yd', last_height);
-					full_path.setAttribute('slope', slope);
+
 	//full_path.setAttribute('stroke-width', pix_str.toFixed(4) + "px")
 	full_path.setAttribute('stroke-width', defaults.stroke + "px")
 	group.appendChild(full_path)
 	svg_drawing.appendChild(group)
-	start[1] = start[1] + defaults.row_spacing
+	start[1] = start[1] + defaults.row_spacing + 0.01
 	start[0] = 0
 	if (start[1] < svg_drawing.getAttribute("height"))
 		drawLine(svg_drawing, image, [start[0], start[1]]);
@@ -283,7 +277,7 @@ var onComplete = function(){
 	drawing = newSVG()
 	workspace = createWorkspace()
 
-	image_orig = createCanvas({image_url: "images/bun0.png", id: "original", appendTo: workspace,
+	image_orig = createCanvas({image_url: "images/me.png", id: "original", appendTo: workspace,
 		callback: function(){ 
 			canvasToCanvas(image_orig, image_filtered);
 			drawLine(drawing, image_filtered, [0,0]);
