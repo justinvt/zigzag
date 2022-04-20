@@ -1,27 +1,33 @@
 
 var drawing, image_orig, image_filtered, workspace
 var i = 0
-var  line_history = Array(10).fill()
+var history_length = 4
+var  line_history = Array(history_length).fill()
  
  
-const defaults = {
+var defaults = {
 	width: 400,
 	height: 400,
-	row_spacing: 7,
-	amplitude: 1.3,
+	row_spacing: 20,
+	amplitude: 2.3,
 	stroke: 0.3,
-	freq_limits: [0.2, .9],
+	freq_limits: [0.04, 50.6],
 	inverse: 0,
 	y_bias:1,
-	x_diff: 0.2,
+	x_diff: 0.15,
 	random: 0,
-	random_bias: 0.3
+	random_bias: 0.3,
+	randomize: 0
 }
+
+defaults.freq_limits[0] = defaults.freq_limits[0]/defaults.x_diff
+defaults.freq_limits[1] = defaults.freq_limits[1]/defaults.x_diff
 
 
 function randFloat(low, hight) {
 return parseFloat( (Math.random() * (hight - low) + low).toFixed(4) )
 }
+
 function applyConvolution(sourceImageData, outputImageData, kernel) {
   const src = sourceImageData.data;
   const dst = outputImageData.data;
@@ -201,22 +207,23 @@ function createWorkspace(){
 
 function frequencyMask(svg_drawing, image,start,endCondition){
 	start ||= [0,0]
-	
-	var cur = start
-	endCondition ||= function(){ return (cur & cur[0] > svg_drawing.width & cur[1] >  svg_drawing.height & cur[0] < 0 & cur[1] < 0) }
+
+	endCondition = false// ||= function(){ return (cur & cur[0] > svg_drawing.width & cur[1] >  svg_drawing.height & cur[0] < 0 & cur[1] < 0) }
 	var context = image.getContext('2d')
 	
 	var group = document.createElementNS("http://www.w3.org/2000/svg", 'g');
-	var line_path = `M ${cur[0]} ${cur[1]} L `
-	while(cur[0] <  svg_drawing.getAttribute("width") || i < 4000){
-			
-			var x_d = defaults.x_diff
-		
-			//console.log("cursor", cur) 
+	var path_points = [
+		[...start]
+	]
+	var color_h = []
+	var  cur = [...start]
+	var x_d  = defaults.x_diff
+	var amplitude = defaults.amplitude
+	var  frequency = 1;
+	while(cur[0] <  svg_drawing.getAttribute("width") ){
+
 			if(context && context.getImageData(cur[0], cur[1], 1, 1)){
-				var x =  cur[0];//parseInt(x_i - rect.left);
-				var y =  cur[1];//parseInt(y_i - rect.top);
-				var pix = context.getImageData(x, y, 1, 1).data
+				var pix = context.getImageData(cur[0], cur[1], 1, 1).data
 				var red =  (pix[0]/255.0)
 				var green = (pix[1]/255.0)
 				var blue =  (pix[2]/255.0)
@@ -225,22 +232,28 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 				var pix_str =  white
 			}
 			var  frequency = defaults.inverse ? black : white 
-			frequency = Math.abs(frequency) * randFloat(1, 1 + defaults.random)
+			frequency = Math.abs(frequency) 
 			// Freq cant be 0 - NaN
-			if(frequency < defaults.freq_limits[0]){frequency = defaults.freq_limits[0]}
-				if(frequency > defaults.freq_limits[1]){frequency = defaults.freq_limits[1]}
+			if(frequency < defaults.freq_limits[0])
+				frequency = defaults.freq_limits[0]
+			if(frequency > defaults.freq_limits[1])
+				frequency = defaults.freq_limits[1]
+			x_d  = defaults.x_diff/ frequency
+				console.log(x_d)
 			var ang_frequency = frequency * (Math.PI * 2) 
-			var amplitude = defaults.amplitude
+	
 			var fun = function(t){
-			//match_vert = 0
-				//match_vert = -(Math.asin(cur[1]/amplitude*ang_frequency)-t)
-				//console.log("match", match_vert)
 				return  start[1] + amplitude * Math.sin((1/ang_frequency)*(t - 0))
 			 }
-			var y_d =  fun(i)
-			 line_path += ` ${cur[0]+x_d} ${y_d} `
 			 
-
+			var y_d =  fun(i)
+			 path_points.push( [ cur[0]+x_d ,  y_d  ] )
+			 var y_s = path_points.slice(-10,-1).map( xy => xy[1])
+			 var slopes = y_s.map((y, j) => (y_s[j] - y_s[j-1]))
+			 var infl = slopes.map((y, j) => ( slopes[j]/slopes[j-1] < 0 ))
+			 if(infl.at(-1)){
+			 	color_h.push(path_points.at(-3))
+			 }
  			//line_history.pop()
 			 //line_history.unshift(line_path)
 			 //console.log(line_history)
@@ -251,20 +264,37 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 		//	console.log("iterat", i)
 			
 	}
+	
+	var path_as_string = `M ${path_points[1].join(" ")} L ${path_points.slice(1, -1).map(t => t.join(" ")).join(" ")}`
+	
 	var full_path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-	full_path.setAttribute('d', line_path);
-	full_path.setAttribute('fill', 'none');
-	full_path.setAttribute('stroke', "#000");
-
-	//full_path.setAttribute('stroke-width', pix_str.toFixed(4) + "px")
-	full_path.setAttribute('stroke-width', defaults.stroke + "px")
+		full_path.setAttribute('d',path_as_string)
+		full_path.setAttribute('fill', 'none');
+		full_path.setAttribute('stroke', "#000");
+		full_path.setAttribute('stroke-width', defaults.stroke + "px")
+	
+	
+	color_h.forEach( xy => {
+		var circ = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+			//full_path.setAttribute('fill', 'none');
+			circ.setAttribute('stroke', "transparent");
+			circ.setAttribute('fill', "#f00");
+			
+				circ.setAttribute('cx', xy[0]);
+							circ.setAttribute('cy',xy[1]);
+				circ.setAttribute('r', "0.4");
+		//	full_path.setAttribute('stroke-width', defaults.stroke + "px")
+		svg_drawing.appendChild(circ)
+	})
 	group.appendChild(full_path)
 	svg_drawing.appendChild(group)
-	start[1] = start[1] + defaults.row_spacing + 0.01
+		
+	start[1] = start[1] + defaults.row_spacing 
 	start[0] = 0
 	if (start[1] < svg_drawing.getAttribute("height"))
-		drawLine(svg_drawing, image, [start[0], start[1]]);
+		drawLine(svg_drawing, image, start, endCondition);
 }
+
 
 function drawLine(svg_drawing, image, start,  endCondition ){
 	frequencyMask(svg_drawing, image,start,endCondition)

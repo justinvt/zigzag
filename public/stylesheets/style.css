@@ -4,7 +4,7 @@ body{
 	padding: 0;
 	border:0;
 	text-align: center;
-	background: #aaa;
+	background: #ccc;
 }
 
 #loader{
@@ -29,10 +29,11 @@ svg{
 	border: solid 1px #000;
 	margin: 50px auto auto auto;
 	background: #fff;
+	    transform: scale(1) rotate(45);
 }
 
 canvas{
-	border: solid 1px #000;
+	border: solid 1px none;
 }
 
 path {
@@ -43,7 +44,7 @@ path {
 }
 
 circle{
-	display:none;
+;
 }
 
 svg path{
@@ -65,11 +66,13 @@ img, canvas {
 }
 
 #workspace{
-	    position: absolute;
-	    clear: both;
-	    top: 0;
-	    right: 0px;
-	    width: 400px;
+	display:none;
+    position: absolute;
+    clear: both;
+    top: 0;
+    right: 0px;
+    padding: 20px 20px 0 20px;
+    background: #aaa
 
 }
 	
@@ -92,8 +95,10 @@ img, canvas {
 }
 	
 canvas {
-	clear: both;
-	transform: scale(0.4);
+    clear: both;
+    transform: scale(1);
+    float: left;
+	margin-bottom: 20px;
 }
 
 li, ul {
