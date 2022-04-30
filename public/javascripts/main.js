@@ -8,16 +8,19 @@ var  line_history = Array(history_length).fill()
 var defaults = {
 	width: 400,
 	height: 400,
-	row_spacing: 20,
+	row_spacing: 9,
 	amplitude: 2.3,
-	stroke: 0.3,
-	freq_limits: [0.04, 50.6],
+	stroke: 0.15,
+	freq_limits: [0.05, 3.9],
 	inverse: 0,
 	y_bias:1,
 	x_diff: 0.15,
 	random: 0,
 	random_bias: 0.3,
-	randomize: 0
+	randomize: 0,
+	draw_register_points: false,
+	x_scale: 1.0,
+	y_scale:1.0
 }
 
 defaults.freq_limits[0] = defaults.freq_limits[0]/defaults.x_diff
@@ -187,6 +190,15 @@ function replaceLineWithPoly(line){
 	return line
 }
 
+function removeAllDrawing(){
+	var paths =  Array.from(document.querySelectorAll(" svg *"))
+	Array.from(paths,  path => {
+		path.remove()
+		//return path
+	 })
+ 
+}
+
 function replaceAll(){
 	var paths =  document.getElementsByTagName('path');
 	Array.from(paths,  path => {
@@ -205,6 +217,44 @@ function createWorkspace(){
 	return new_workspace
 }
 
+
+function adjustDefaults(){
+	Array.from(document.querySelectorAll(".control_panel span")).map( d => ( defaults[d.textContent] = d. nextSibling.value ))
+}
+function redraw(){
+	 removeAllDrawing()
+	drawLine(drawing, image_filtered, [0,0]);
+}
+
+function controlPanel(){
+	var panel = document.createElement('div');
+	panel.className = "control_panel"
+	Object.keys(defaults).forEach( k => 
+	
+		{	var d = document.createElement('div')
+			var sp = document.createElement("span")
+			var el = document.createElement('input')
+			sp.append(k)
+			el.type = "text"
+			el.value = defaults[k]
+			el.onblur = function(){ 
+				adjustDefaults()
+				redraw()
+			}
+			d.append(sp)
+			d.append(el)
+			panel.append(d)
+		}
+	)
+	document.body.prepend(panel)
+}
+
+
+function y_function(t,b, f,a, v_origin){
+	var ang_frequency = f * (Math.PI * 2) 
+	return  v_origin+ (a * b)* Math.sin((1/ang_frequency)*(t - 0))
+ }
+
 function frequencyMask(svg_drawing, image,start,endCondition){
 	start ||= [0,0]
 
@@ -216,6 +266,7 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 		[...start]
 	]
 	var color_h = []
+	var int_h  = []
 	var  cur = [...start]
 	var x_d  = defaults.x_diff
 	var amplitude = defaults.amplitude
@@ -223,7 +274,7 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 	while(cur[0] <  svg_drawing.getAttribute("width") ){
 
 			if(context && context.getImageData(cur[0], cur[1], 1, 1)){
-				var pix = context.getImageData(cur[0], cur[1], 1, 1).data
+				var pix = context.getImageData(cur[0] / defaults.x_scale , cur[1] / defaults.y_scale, 1, 1).data
 				var red =  (pix[0]/255.0)
 				var green = (pix[1]/255.0)
 				var blue =  (pix[2]/255.0)
@@ -231,37 +282,30 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 				var black	= 1- white
 				var pix_str =  white
 			}
-			var  frequency = defaults.inverse ? black : white 
-			frequency = Math.abs(frequency) 
+			
+ 		   
 			// Freq cant be 0 - NaN
 			if(frequency < defaults.freq_limits[0])
 				frequency = defaults.freq_limits[0]
 			if(frequency > defaults.freq_limits[1])
 				frequency = defaults.freq_limits[1]
-			x_d  = defaults.x_diff/ frequency
-				console.log(x_d)
-			var ang_frequency = frequency * (Math.PI * 2) 
-	
-			var fun = function(t){
-				return  start[1] + amplitude * Math.sin((1/ang_frequency)*(t - 0))
-			 }
-			 
-			var y_d =  fun(i)
+			//x_d  = defaults.x_diff / frequency
+			 var y_d =  y_function(i, black , frequency, amplitude, start[1])
 			 path_points.push( [ cur[0]+x_d ,  y_d  ] )
 			 var y_s = path_points.slice(-10,-1).map( xy => xy[1])
 			 var slopes = y_s.map((y, j) => (y_s[j] - y_s[j-1]))
 			 var infl = slopes.map((y, j) => ( slopes[j]/slopes[j-1] < 0 ))
-			 if(infl.at(-1)){
-			 	color_h.push(path_points.at(-3))
+			 var y_int = y_s.map((y, j) => (y_s[j-1] > start[1] && y_s[j] <=  start[1])  )
+			
+			if(infl.at(-1)){
+				color_h.push(path_points.at(-3))
 			 }
- 			//line_history.pop()
-			 //line_history.unshift(line_path)
-			 //console.log(line_history)
-
+			
+			if(y_int.at(-1)){
+				int_h.push(path_points.at(-2))
+			 }
 			cur[0] += x_d;
-			//cur[1] += y_d;
 			i++
-		//	console.log("iterat", i)
 			
 	}
 	
@@ -273,19 +317,34 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 		full_path.setAttribute('stroke', "#000");
 		full_path.setAttribute('stroke-width', defaults.stroke + "px")
 	
-	
-	color_h.forEach( xy => {
-		var circ = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
-			//full_path.setAttribute('fill', 'none');
-			circ.setAttribute('stroke', "transparent");
-			circ.setAttribute('fill', "#f00");
+
+		defaults.draw_register_points && color_h.forEach( xy => {
+			var circ = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+				//full_path.setAttribute('fill', 'none');
+				circ.setAttribute('stroke', "transparent");
+				circ.setAttribute('fill', "#f00");
 			
 				circ.setAttribute('cx', xy[0]);
-							circ.setAttribute('cy',xy[1]);
+				circ.setAttribute('cy',xy[1]);
 				circ.setAttribute('r', "0.4");
 		//	full_path.setAttribute('stroke-width', defaults.stroke + "px")
-		svg_drawing.appendChild(circ)
-	})
+			svg_drawing.appendChild(circ)
+		})
+	
+		defaults.draw_register_points && int_h.forEach( xy => {
+			var circ = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+			//full_path.setAttribute('fill', 'none');
+			circ.setAttribute('stroke', "transparent");
+			circ.setAttribute('fill', "#00f");
+			
+				circ.setAttribute('cx', xy[0]);
+				circ.setAttribute('cy',xy[1]);
+				circ.setAttribute('r', "0.4");
+		//	full_path.setAttribute('stroke-width', defaults.stroke + "px")
+				svg_drawing.appendChild(circ)
+		})
+	
+	
 	group.appendChild(full_path)
 	svg_drawing.appendChild(group)
 		
@@ -304,10 +363,11 @@ function drawLine(svg_drawing, image, start,  endCondition ){
 
  
 var onComplete = function(){
+	controlPanel()
 	drawing = newSVG()
 	workspace = createWorkspace()
 
-	image_orig = createCanvas({image_url: "images/me.png", id: "original", appendTo: workspace,
+	image_orig = createCanvas({image_url: "images/face22.png", id: "original", appendTo: workspace,
 		callback: function(){ 
 			canvasToCanvas(image_orig, image_filtered);
 			drawLine(drawing, image_filtered, [0,0]);

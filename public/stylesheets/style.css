@@ -29,7 +29,7 @@ svg{
 	border: solid 1px #000;
 	margin: 50px auto auto auto;
 	background: #fff;
-	    transform: scale(1) rotate(45);
+	transform: scale(3.0)
 }
 
 canvas{
@@ -67,13 +67,12 @@ img, canvas {
 
 #workspace{
 	display:none;
-    position: absolute;
-    clear: both;
-    top: 0;
-    right: 0px;
-    padding: 20px 20px 0 20px;
-    background: #aaa
-
+	position: absolute;
+	clear: both;
+	top: 0;
+	right: 0px;
+	padding: 20px 20px 0 20px;
+	background: #aaa
 }
 	
 .image_upload{
@@ -95,9 +94,9 @@ img, canvas {
 }
 	
 canvas {
-    clear: both;
-    transform: scale(1);
-    float: left;
+	clear: both;
+	transform: scale(1);
+	float: left;
 	margin-bottom: 20px;
 }
 
@@ -106,6 +105,4 @@ li, ul {
 	text-align: left;
 }
 
-#filtered{
-
-}
+#filtered{}
