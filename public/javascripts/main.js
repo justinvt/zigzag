@@ -9,24 +9,30 @@ var defaults = {
 	width: 400,
 	height: 400,
 	row_spacing: 9,
-	amplitude: 2.3,
+	amplitude: 3.3,
 	stroke: 0.15,
-	freq_limits: [0.05, 3.9],
-	inverse: 0,
+	freq_limits: [0.0003, 0.0015],
+	inverse:1,
 	y_bias:1,
-	x_diff: 0.15,
+	x_diff: 0.03,
 	random: 0,
 	random_bias: 0.3,
 	randomize: 0,
 	draw_register_points: false,
 	x_scale: 1.0,
-	y_scale:1.0
+	y_scale:1.0,
+	img_url: "images/faceblur.png"
 }
 
 defaults.freq_limits[0] = defaults.freq_limits[0]/defaults.x_diff
 defaults.freq_limits[1] = defaults.freq_limits[1]/defaults.x_diff
-
-
+defaults.freq_range = defaults.freq_limits[1] - defaults.freq_limits[0]
+defaults.freq_norm = function(val){
+	 return defaults.freq_limits[0] + (defaults.freq_range * val)
+}
+function isNumber(n){
+    return typeof n == 'number' && !isNaN(n) && isFinite(n);
+ }
 function randFloat(low, hight) {
 return parseFloat( (Math.random() * (hight - low) + low).toFixed(4) )
 }
@@ -249,10 +255,33 @@ function controlPanel(){
 	document.body.prepend(panel)
 }
 
+function add_coords(){
+				 path_points.push( [ cur[0]+x_d ,  y_d  ] )
+}
 
-function y_function(t,b, f,a, v_origin){
-	var ang_frequency = f * (Math.PI * 2) 
-	return  v_origin+ (a * b)* Math.sin((1/ang_frequency)*(t - 0))
+function y_function(t,b, f,a, v_origin, reset=false){
+	if(reset){
+		i = 0; t = 0;
+	}
+	var amp_func = a
+	var period = 1 / f
+	var ang_freq = Math.PI * 2 / period
+	var C = 0
+	return amp_func * Math.sin((t/period ) - C) + v_origin
+ }
+ 
+ function getColor(context, coords){
+	 if(context && context.getImageData(coords[0], coords[1], 1, 1)){
+	 	var pix = context.getImageData(coords[0] / defaults.x_scale , coords[1] / defaults.y_scale, 1, 1).data
+	 	var red =  (pix[0]/255.0)
+	 	var green = (pix[1]/255.0)
+	 	var blue =  (pix[2]/255.0)
+	 	var white =  (red * green * blue )
+	 	var black	= 1 - white
+	 	var pix_str =  defaults.freq_norm(black)
+	 }
+	 
+	 return pix_str
  }
 
 function frequencyMask(svg_drawing, image,start,endCondition){
@@ -270,46 +299,50 @@ function frequencyMask(svg_drawing, image,start,endCondition){
 	var  cur = [...start]
 	var x_d  = defaults.x_diff
 	var amplitude = defaults.amplitude
-	var  frequency = 1;
+	var  frequency = 0.01;
+	
 	while(cur[0] <  svg_drawing.getAttribute("width") ){
 
-			if(context && context.getImageData(cur[0], cur[1], 1, 1)){
-				var pix = context.getImageData(cur[0] / defaults.x_scale , cur[1] / defaults.y_scale, 1, 1).data
-				var red =  (pix[0]/255.0)
-				var green = (pix[1]/255.0)
-				var blue =  (pix[2]/255.0)
-				var white =  (red * green * blue )
-				var black	= 1- white
-				var pix_str =  white
-			}
-			
- 		   
-			// Freq cant be 0 - NaN
+			var pix_str = getColor(context, cur)
+/*
 			if(frequency < defaults.freq_limits[0])
 				frequency = defaults.freq_limits[0]
-			if(frequency > defaults.freq_limits[1])
+			if(frequency >= defaults.freq_limits[1])
 				frequency = defaults.freq_limits[1]
-			//x_d  = defaults.x_diff / frequency
-			 var y_d =  y_function(i, black , frequency, amplitude, start[1])
+		*/
+		//	x_d  = defaults.x_diff / frequency
+			var y_d =  y_function(i, pix_str , frequency, amplitude, start[1], false)
 			 path_points.push( [ cur[0]+x_d ,  y_d  ] )
+				
 			 var y_s = path_points.slice(-10,-1).map( xy => xy[1])
 			 var slopes = y_s.map((y, j) => (y_s[j] - y_s[j-1]))
 			 var infl = slopes.map((y, j) => ( slopes[j]/slopes[j-1] < 0 ))
-			 var y_int = y_s.map((y, j) => (y_s[j-1] > start[1] && y_s[j] <=  start[1])  )
+			 var y_int = y_s.map((y, j) => (y_s[j-1] < start[1] && y_s[j] >=  start[1])  )
 			
-			if(infl.at(-1)){
+			if (infl.at(-1))
 				color_h.push(path_points.at(-3))
-			 }
 			
-			if(y_int.at(-1)){
-				int_h.push(path_points.at(-2))
-			 }
+			if (y_int.at(-1)){
+				frequency = pix_str
+				var new_y =  y_function(i, pix_str , frequency, amplitude, start[1], true)
+				cur = [ cur[0], start[1] ]
+				//path_points.pop()
+				//path_points.push( cur )
+				int_h.push(path_points.at(-1))
+			}
 			cur[0] += x_d;
 			i++
 			
 	}
 	
-	var path_as_string = `M ${path_points[1].join(" ")} L ${path_points.slice(1, -1).map(t => t.join(" ")).join(" ")}`
+	path_points = path_points.map( n => {
+		return [
+			isNumber(n[0]) ? n[0] : 0.0  ,
+			isNumber(n[1]) ? n[1] : 0.0
+		] 
+	})
+	
+	var path_as_string = `M ${path_points[1].join(" ")} L ${path_points.slice(1, -1).map(t => t.join(" ")).join(" ")} `
 	
 	var full_path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
 		full_path.setAttribute('d',path_as_string)
@@ -367,7 +400,7 @@ var onComplete = function(){
 	drawing = newSVG()
 	workspace = createWorkspace()
 
-	image_orig = createCanvas({image_url: "images/face22.png", id: "original", appendTo: workspace,
+	image_orig = createCanvas({image_url:defaults.img_url, id: "original", appendTo: workspace,
 		callback: function(){ 
 			canvasToCanvas(image_orig, image_filtered);
 			drawLine(drawing, image_filtered, [0,0]);
